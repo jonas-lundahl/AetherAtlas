@@ -1,6 +1,12 @@
 #if DEBUG
   import Foundation
 
+  struct UITestReleaseChecker: AppReleaseChecking {
+    func latestRelease() async throws -> AppRelease {
+      AppRelease(tag: "20991231.2359")!
+    }
+  }
+
   /// Explicit Debug-only test seam. Release builds contain neither the fixtures nor this switch.
   struct UITestRepository: GameRepository {
     private var item: EntitySummary {

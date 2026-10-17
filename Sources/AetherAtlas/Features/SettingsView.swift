@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct SettingsView: View {
+  let version: String
+  @Environment(\.openWindow) private var openWindow
   var body: some View {
     Form {
       Section("Aether Atlas") {
@@ -8,6 +10,10 @@ struct SettingsView: View {
         Text(
           "Search items, recipes, quests, NPCs, and actions. Use ⌘F to search, ⌘D to save a favorite, and ⌘[ / ⌘] to navigate."
         )
+      }
+      Section("Updates") {
+        Text("Version \(version)")
+        Button("Check for Updates…") { openWindow(id: "app-updates") }
       }
       Section("Local data") {
         Text(
@@ -21,6 +27,6 @@ struct SettingsView: View {
           "FINAL FANTASY XIV © SQUARE ENIX. Aether Atlas is an independent community tool, unaffiliated with Square Enix. Icons are requested from XIVAPI as you browse and are not bundled with the app. No account, API key, analytics, or backend is used."
         )
       }
-    }.formStyle(.grouped).frame(width: 540, height: 440)
+    }.formStyle(.grouped).frame(width: 540, height: 520)
   }
 }

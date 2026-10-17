@@ -9,6 +9,7 @@ import SwiftUI
     }
     .defaultSize(width: 1320, height: 840)
     .commands {
+      AppUpdateCommands()
       CommandGroup(after: .textEditing) {
         Button("Find in Game Database") { workspace.searchFocus += 1 }.keyboardShortcut("f")
       }
@@ -27,6 +28,12 @@ import SwiftUI
           "r", modifiers: .command)
       }
     }
-    Settings { SettingsView() }
+    Window("Software Update", id: "app-updates") {
+      AppUpdateView(model: workspace.updates)
+    }
+    .windowResizability(.contentSize)
+    .defaultLaunchBehavior(.suppressed)
+    .restorationBehavior(.disabled)
+    Settings { SettingsView(version: workspace.updates.currentVersion) }
   }
 }

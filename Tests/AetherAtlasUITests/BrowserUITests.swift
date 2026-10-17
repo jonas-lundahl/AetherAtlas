@@ -1,6 +1,28 @@
 import XCTest
 
 @MainActor final class BrowserUITests: XCTestCase {
+  func testUpdateMenuShowsAvailableVersionAndCanCheckAgain() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let menu = app.menuBars.menuBarItems["AetherAtlas"]
+    XCTAssertTrue(menu.waitForExistence(timeout: 10), app.debugDescription)
+    menu.click()
+    let check = app.menuItems["Check for Updates…"]
+    XCTAssertTrue(check.waitForExistence(timeout: 5))
+    check.click()
+    let window = app.windows["Software Update"]
+    XCTAssertTrue(window.waitForExistence(timeout: 5))
+    XCTAssertTrue(
+      window.staticTexts["Version 20991231.2359 is available."].waitForExistence(timeout: 5))
+    XCTAssertTrue(window.buttons["Download Update…"].exists)
+    window.buttons["Check Again"].click()
+    XCTAssertTrue(
+      window.staticTexts["Version 20991231.2359 is available."].waitForExistence(timeout: 5))
+  }
+
   func testSearchDetailsRecipeKeyboardAndPersistentFavorite() throws {
     continueAfterFailure = false
     let app = XCUIApplication()

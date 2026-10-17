@@ -67,3 +67,16 @@ Added formatted descriptions for actions and items using the documented `Descrip
 - **Live verification:** opened Sprint from the real API in the rebuilt Release app. The screenshot visibly shows green Duration / Additional Effect / Jog Effect labels, yellow Jog, and the original line breaks. The app was left open on that action.
 
 Files: new domain/parser and shared SwiftUI text component; action/item request projections and detail mapping/views; captured Sprint fixture and parser/native-attribute/UI tests; Xcode source registration; README. Formatting coverage is the documented inline subset; unfamiliar future markup falls back to plain text.
+
+## Manual update checking — 17 October 2026
+
+Added **Check for Updates…** after About in the application menu and in Settings. A single native Software Update window checks the public GitHub latest-release endpoint only when opened or retried. Numeric component comparison supports timestamp tags and the original `1.0` development version. New releases open the canonical GitHub release URL in the browser for manual installation. The app does not install or replace itself, persist credentials, or poll in the background.
+
+The user selected public visibility for `jonas-lundahl/AetherAtlas` so release checks and downloads can work without GitHub authentication. Request failures, missing releases, unsupported tags, and rate limits are distinct from an up-to-date result. Cancellation and generation checks prevent a closed or superseded request from publishing a stale result. Release URLs are constructed from the fixed repository and validated numeric tag rather than accepting an arbitrary URL from the response.
+
+- **Xcode:** 45 core/native text tests passed, including version comparison, public request headers, release validation, HTTP failures, offline state, cancellation, and response ordering. Result: `build/Logs/Test/Test-AetherAtlas-2026.10.17_11-17-53-+0200.xcresult`.
+- **SwiftPM:** 43 core tests passed with complete strict concurrency checking.
+- **Native UI:** the three existing browsing tests passed. The new focused update-menu test passed after correcting its menu selector; it verifies opening Software Update, the available version, download action, and Check Again. Fixtures keep these tests independent of GitHub and never open a browser. The update fixture is excluded from Release.
+- **Formatting:** Swift formatting and whitespace checks passed for the changed sources.
+
+Signing and notarization are unchanged: downloaded updates use ad-hoc signing and may require macOS approval. Installation is manual, and Intel runtime behavior remains unverified.
