@@ -1,0 +1,100 @@
+name: Release macOS app
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Test, build, and publish
+    runs-on: xcode-27
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      # This runner image is in preview; select the stable Xcode build explicitly.
+      DEVELOPER_DIR: /Applications/Xcode_27.1.app/Contents/Developer
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out the selected commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Verify the toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          test "$(xcodebuild -version | tail -1)" = 'Build version 27A9275'
+          xcrun swift --version
+          xcrun --sdk macosx --show-sdk-version
+
+      - name: Choose the timestamp version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version=$(TZ=Europe/Stockholm date '+%Y%m%d.%H%M')
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$version" \
+            --jq "map(select(.ref == \"refs/tags/$version\")) | length")
+          if [[ "$existing" != 0 ]]; then
+            echo "::error::Version $version already exists. Run the workflow again in a later minute."
+            exit 1
+          fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $version (Europe/Stockholm)"
+
+      - name: Run core and native text tests
+        run: |
+          set -euo pipefail
+          xcodebuild -quiet -project AetherAtlas.xcodeproj -scheme AetherAtlas \
+            -configuration Debug -derivedDataPath build/CI \
+            -destination 'platform=macOS,arch=arm64' \
+            -resultBundlePath build/CoreTests.xcresult \
+            test CODE_SIGN_IDENTITY=-
+
+      - name: Archive and package the universal app
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.value }}
+        run: bash Scripts/build_release.sh "$RELEASE_VERSION" "$GITHUB_RUN_NUMBER"
+
+      - name: Publish the release with generated notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          asset="build/Distribution/AetherAtlas-$RELEASE_VERSION-macOS-universal.zip"
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          Download **AetherAtlas-$RELEASE_VERSION-macOS-universal.zip**, unzip it, and move AetherAtlas.app to Applications.
+
+          Requires **macOS 26 or later**. Includes Apple Silicon and Intel binaries.
+
+          This build is ad-hoc signed and is not notarized. macOS may require approval in **System Settings → Privacy & Security → Open Anyway** after the first launch attempt.
+
+          Version: **$RELEASE_VERSION** (Europe/Stockholm). [Build and test run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID).
+          EOF
+          release_url=$(gh release create "$RELEASE_VERSION" \
+            "$asset" "$asset.sha256" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Aether Atlas $RELEASE_VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --generate-notes --latest)
+          echo "$release_url"
+          {
+            echo "### Aether Atlas $RELEASE_VERSION"
+            echo
+            echo "[Download the release]($release_url)"
+            echo
+            echo 'Universal macOS 26+ app; ad-hoc signed, not notarized.'
+          } >> "$GITHUB_STEP_SUMMARY"
