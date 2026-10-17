@@ -1,5 +1,31 @@
 import Foundation
 
+/// Localizations available from XIVAPI's global game dataset.
+public enum GameLanguage: String, Codable, CaseIterable, Sendable, Identifiable {
+  case english = "en"
+  case german = "de"
+  case french = "fr"
+  case japanese = "ja"
+
+  public var id: Self { self }
+  public var flag: String {
+    switch self {
+    case .english: "🇬🇧"
+    case .german: "🇩🇪"
+    case .french: "🇫🇷"
+    case .japanese: "🇯🇵"
+    }
+  }
+  public var title: String {
+    switch self {
+    case .english: "English"
+    case .german: "Deutsch"
+    case .french: "Français"
+    case .japanese: "日本語"
+    }
+  }
+}
+
 public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
   case item = "Item"
   case recipe = "Recipe"

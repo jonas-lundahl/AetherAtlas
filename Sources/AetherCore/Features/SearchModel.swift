@@ -4,6 +4,9 @@ import Observation
 @MainActor @Observable public final class SearchModel {
   public var query = "" { didSet { if query != oldValue { schedule() } } }
   public var kind: EntityKind = .item { didSet { if kind != oldValue { schedule() } } }
+  public var language: GameLanguage {
+    didSet { if language != oldValue { schedule(immediate: true) } }
+  }
   public private(set) var entries: [EntitySummary] = []
   public private(set) var isLoading = false
   public private(set) var isLoadingMore = false
@@ -16,9 +19,13 @@ import Observation
   @ObservationIgnored private let debounce: Duration
   @ObservationIgnored private var task: Task<Void, Never>?
   @ObservationIgnored private var revision = 0
-  public init(repository: any GameRepository, debounce: Duration = .milliseconds(300)) {
+  public init(
+    repository: any GameRepository, debounce: Duration = .milliseconds(300),
+    language: GameLanguage = .english
+  ) {
     self.repository = repository
     self.debounce = debounce
+    self.language = language
   }
   public var canLoadMore: Bool { next != nil || after != nil }
   public func start() { schedule(immediate: true) }
@@ -35,6 +42,7 @@ import Observation
     revision += 1
     let token = revision
     let kind = kind
+    let language = language
     let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
     entries = []
     next = nil
@@ -51,8 +59,8 @@ import Observation
         let page =
           try await
           (text.isEmpty
-          ? repository.browse(kind: kind, after: nil)
-          : repository.search(kind: kind, text: text, cursor: nil))
+          ? repository.browse(kind: kind, after: nil, language: language)
+          : repository.search(kind: kind, text: text, cursor: nil, language: language))
         try Task.checkCancellation()
         guard let self, token == self.revision else { return }
         self.entries = page.entries
@@ -71,6 +79,7 @@ import Observation
     guard canLoadMore, !isLoadingMore, !isLoading else { return }
     let token = revision
     let kind = kind
+    let language = language
     let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
     let cursor = next
     let last = after
@@ -81,8 +90,8 @@ import Observation
       let page =
         try await
         (text.isEmpty
-        ? repository.browse(kind: kind, after: last)
-        : repository.search(kind: kind, text: text, cursor: cursor))
+        ? repository.browse(kind: kind, after: last, language: language)
+        : repository.search(kind: kind, text: text, cursor: cursor, language: language))
       try Task.checkCancellation()
       guard token == revision else { return }
       var seen = Set(entries.map(\.id))

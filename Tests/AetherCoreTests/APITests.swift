@@ -51,6 +51,25 @@ actor StubTransport: HTTPTransport {
   #expect(items.contains { $0.name == "cursor" && $0.value == "cursor-id" })
   #expect(!items.contains { $0.name == "query" || $0.name == "sheets" })
 }
+@Test(arguments: GameLanguage.allCases)
+func localizedRequestsIncludeLanguageOnEveryPage(language: GameLanguage) throws {
+  let requests: [APIRequest] = [
+    .search(kind: .recipe, text: "ポーション", language: language),
+    .search(kind: .item, text: "", cursor: "page-two", language: language),
+    .browse(kind: .item, language: language),
+    .browse(kind: .item, after: 50, language: language),
+    .detail(EntityID(kind: .action, row: 3), language: language),
+    .recipes(item: 4551, language: language),
+    .recipes(item: 4551, cursor: "recipes-two", language: language),
+  ]
+  for request in requests {
+    let components = try #require(URLComponents(url: request.url(), resolvingAgainstBaseURL: false))
+    #expect(
+      components.queryItems?.filter { $0.name == "language" }.map(\.value) == [language.rawValue])
+  }
+  let query = requests[0].parameters.first { $0.name == "query" }?.value
+  #expect(query == "ItemResult.Name~\"ポーション\"")
+}
 @Test func decodeSearchAndMissingFields() throws {
   let json =
     #"{"next":"next-page","results":[{"sheet":"Item","row_id":4551,"fields":{"Name":"Potion","LevelItem@as(raw)":10,"Icon":{"id":1,"path":"icon.tex"}}}]}"#

@@ -7,19 +7,23 @@ struct EntityDetailView: View {
   var body: some View {
     Group {
       if let current = workspace.navigation.current {
-        if let detail = model.detail, detail.entity.id == current.id {
-          content(detail)
-        } else if let error = model.error {
-          ContentUnavailableView {
-            Label("Couldn’t open \(current.displayName)", systemImage: "exclamationmark.triangle")
-          } description: {
-            Text(error)
-          } actions: {
-            Button("Try Again") { refresh += 1 }
+        VStack(spacing: 0) {
+          objectLanguagePicker.padding(.horizontal, 28).padding(.vertical, 12)
+          Divider()
+          if let detail = model.detail, detail.entity.id == current.id {
+            content(detail)
+          } else if let error = model.error {
+            ContentUnavailableView {
+              Label("Couldn’t open \(current.displayName)", systemImage: "exclamationmark.triangle")
+            } description: {
+              Text(error)
+            } actions: {
+              Button("Try Again") { refresh += 1 }
+            }
+          } else {
+            ProgressView("Opening \(current.displayName)…").frame(
+              maxWidth: .infinity, maxHeight: .infinity)
           }
-        } else {
-          ProgressView("Opening \(current.displayName)…").frame(
-            maxWidth: .infinity, maxHeight: .infinity)
         }
       } else {
         ContentUnavailableView {
@@ -31,7 +35,11 @@ struct EntityDetailView: View {
         }
       }
     }
-    .navigationTitle(workspace.navigation.current?.displayName ?? "Aether Atlas")
+    .navigationTitle(
+      model.detail?.entity.id == workspace.navigation.current?.id
+        ? model.detail?.entity.displayName ?? "Aether Atlas"
+        : workspace.navigation.current?.displayName ?? "Aether Atlas"
+    )
     .toolbar {
       if let entity = model.detail?.entity, workspace.navigation.current?.id == entity.id {
         ToolbarItemGroup(placement: .primaryAction) {
@@ -45,12 +53,33 @@ struct EntityDetailView: View {
         }
       }
     }
-    .task(id: LoadKey(id: workspace.navigation.current?.id, refresh: refresh)) {
+    .task(
+      id: LoadKey(
+        id: workspace.navigation.current?.id, refresh: refresh, language: workspace.objectLanguage)
+    ) {
       let id = workspace.navigation.current?.id
+      model.language = workspace.objectLanguage
       await model.load(id, refresh: refresh > 0)
     }
     .onChange(of: model.detail?.entity) { _, entity in
       if let entity { Task { await workspace.library.record(entity) } }
+    }
+  }
+  private var objectLanguagePicker: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack {
+        Text("Object language")
+        Spacer()
+        Text(workspace.objectLanguage.title).accessibilityIdentifier("objectLanguageName")
+      }.font(.caption).foregroundStyle(.secondary)
+      GameLanguagePicker(
+        label: "Object language",
+        selection: Binding(
+          get: { workspace.objectLanguage },
+          set: { workspace.objectLanguageOverride = $0 }),
+        identifier: "objectLanguagePicker"
+      )
+      .fixedSize()
     }
   }
   private func content(_ detail: EntityDetail) -> some View {
@@ -93,9 +122,13 @@ struct EntityDetailView: View {
         DisclosureGroup("Source information") {
           VStack(alignment: .leading, spacing: 8) {
             MetadataRow(label: "Sheet / row", value: detail.entity.id.description)
+            MetadataRow(label: "Game language", value: workspace.objectLanguage.title)
             if let version = detail.version { MetadataRow(label: "Game version", value: version) }
             if let schema = detail.schema { MetadataRow(label: "Schema", value: schema) }
-            if let url = try? APIRequest.detail(detail.entity.id).url() {
+            if let url = try? APIRequest.detail(
+              detail.entity.id, language: workspace.objectLanguage
+            )
+            .url() {
               Link("View source on XIVAPI", destination: url).font(.caption)
             }
           }.padding(.top, 10).textSelection(.enabled)
@@ -338,6 +371,7 @@ struct EntityDetailView: View {
 private struct LoadKey: Equatable {
   let id: EntityID?
   let refresh: Int
+  let language: GameLanguage
 }
 struct DetailSection<Content: View>: View {
   let title: String

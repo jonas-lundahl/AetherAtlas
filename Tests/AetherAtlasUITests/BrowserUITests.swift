@@ -1,6 +1,93 @@
 import XCTest
 
 @MainActor final class BrowserUITests: XCTestCase {
+  func testObjectLanguageOverridesDefaultAndSurvivesBackNavigation() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let row = app.descendants(matching: .any)["entity-Item:1"]
+    XCTAssertTrue(row.waitForExistence(timeout: 10))
+    row.click()
+    let objectPicker = app.descendants(matching: .any).matching(identifier: "objectLanguagePicker")
+      .firstMatch
+    XCTAssertTrue(objectPicker.waitForExistence(timeout: 5))
+    XCTAssertLessThan(objectPicker.frame.width, 180)
+    objectPicker.radioButtons["🇯🇵"].click()
+    let japaneseRecipe = app.buttons["Open フィクスチャ・ポーション, Recipe"]
+    XCTAssertTrue(japaneseRecipe.waitForExistence(timeout: 5))
+    let globalPicker = app.descendants(matching: .any).matching(identifier: "gameLanguagePicker")
+      .firstMatch
+    XCTAssertEqual(globalPicker.radioButtons["🇬🇧"].value as? Int, 1)
+    globalPicker.radioButtons["🇩🇪"].click()
+    XCTAssertTrue(japaneseRecipe.waitForExistence(timeout: 5))
+    XCTAssertEqual(objectPicker.radioButtons["🇯🇵"].value as? Int, 1)
+    japaneseRecipe.click()
+    XCTAssertTrue(app.buttons["Open Fixture Wasser, Item"].waitForExistence(timeout: 5))
+    XCTAssertEqual(objectPicker.radioButtons["🇩🇪"].value as? Int, 1)
+    XCTAssertEqual(objectPicker.radioButtons.count, 4)
+    app.typeKey("[", modifierFlags: .command)
+    XCTAssertTrue(japaneseRecipe.waitForExistence(timeout: 5))
+    XCTAssertEqual(objectPicker.radioButtons["🇯🇵"].value as? Int, 1)
+    objectPicker.radioButtons["🇬🇧"].click()
+    let englishRecipe = app.buttons["Open Fixture Potion, Recipe"]
+    XCTAssertTrue(englishRecipe.waitForExistence(timeout: 5))
+    globalPicker.radioButtons["🇫🇷"].click()
+    XCTAssertTrue(englishRecipe.waitForExistence(timeout: 5))
+    XCTAssertEqual(objectPicker.radioButtons["🇬🇧"].value as? Int, 1)
+    objectPicker.radioButtons["🇫🇷"].click()
+    XCTAssertTrue(app.buttons["Open Fixture Potion française, Recipe"].waitForExistence(timeout: 5))
+  }
+
+  func testLanguageToggleReloadsDataLinksAndPersistsAcrossLaunches() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let picker = app.descendants(matching: .any).matching(identifier: "gameLanguagePicker")
+      .firstMatch
+    XCTAssertTrue(picker.waitForExistence(timeout: 10), app.debugDescription)
+    XCTAssertEqual(picker.radioButtons.count, 4)
+    XCTAssertLessThan(picker.frame.width, 180)
+    let row = app.descendants(matching: .any)["entity-Item:1"]
+    XCTAssertTrue(row.waitForExistence(timeout: 5))
+    row.click()
+    XCTAssertTrue(app.buttons["Open Fixture Potion, Recipe"].waitForExistence(timeout: 5))
+    let languages = [
+      ("🇩🇪", "Fixture Heiltrank"),
+      ("🇫🇷", "Fixture Potion française"),
+      ("🇯🇵", "フィクスチャ・ポーション"),
+      ("🇬🇧", "Fixture Potion"),
+    ]
+    for (language, name) in languages {
+      picker.radioButtons[language].click()
+      XCTAssertTrue(app.buttons["Open \(name), Recipe"].waitForExistence(timeout: 5))
+      let detail = app.staticTexts["entityDetailName"]
+      XCTAssertEqual((detail.value as? String) ?? detail.label, name)
+    }
+    picker.radioButtons["🇩🇪"].click()
+    let recipe = app.buttons["Open Fixture Heiltrank, Recipe"]
+    XCTAssertTrue(recipe.waitForExistence(timeout: 5))
+    recipe.click()
+    XCTAssertTrue(app.buttons["Open Fixture Wasser, Item"].waitForExistence(timeout: 5))
+    app.typeKey("[", modifierFlags: .command)
+    XCTAssertTrue(recipe.waitForExistence(timeout: 5))
+    app.typeKey("f", modifierFlags: .command)
+    app.searchFields.firstMatch.typeText("fixture")
+    XCTAssertTrue(row.waitForExistence(timeout: 5))
+    row.click()
+    XCTAssertTrue(recipe.waitForExistence(timeout: 5))
+    app.terminate()
+    app.launch()
+    XCTAssertTrue(picker.waitForExistence(timeout: 10))
+    XCTAssertEqual(picker.radioButtons["🇩🇪"].value as? Int, 1)
+    XCTAssertTrue(row.waitForExistence(timeout: 5))
+    row.click()
+    XCTAssertTrue(recipe.waitForExistence(timeout: 5))
+  }
+
   func testUpdateMenuShowsAvailableVersionAndCanCheckAgain() {
     continueAfterFailure = false
     let app = XCUIApplication()

@@ -184,6 +184,31 @@ func strictCacheDirectivesPreventOfflineReuse(control: String) async throws {
   await #expect(throws: APIError.self) { try await repository.search(kind: .item, text: "a") }
   #expect(await transport.count == 2)
 }
+@Test func repositoryKeepsLocalizedCacheEntriesSeparate() async throws {
+  let directory = try temporaryDirectory()
+  defer { try? FileManager.default.removeItem(at: directory) }
+  let transport = StubTransport(
+    #"{"results":[],"rows":[],"row_id":4551,"fields":{"Name":"Potion"}}"#)
+  let repository = LiveGameRepository(
+    cache: ResponseCache(client: XIVAPIClient(transport: transport), directory: directory))
+  for language in GameLanguage.allCases {
+    for _ in 0..<2 {
+      _ = try await repository.search(kind: .item, text: "potion", language: language)
+      _ = try await repository.browse(kind: .item, language: language)
+      _ = try await repository.detail(EntityID(kind: .item, row: 4551), language: language)
+      _ = try await repository.recipes(item: 4551, language: language)
+    }
+  }
+  let requests = await transport.requests
+  #expect(requests.count == 16)
+  for language in GameLanguage.allCases {
+    #expect(
+      requests.filter {
+        URLComponents(url: $0.url!, resolvingAgainstBaseURL: false)?.queryItems?
+          .contains { $0.name == "language" && $0.value == language.rawValue } == true
+      }.count == 4)
+  }
+}
 @Test func unsupportedLibrarySchemaPreservesData() async throws {
   let directory = try temporaryDirectory()
   defer { try? FileManager.default.removeItem(at: directory) }

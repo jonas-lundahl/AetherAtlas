@@ -9,34 +9,54 @@
 
   /// Explicit Debug-only test seam. Release builds contain neither the fixtures nor this switch.
   struct UITestRepository: GameRepository {
-    private var item: EntitySummary {
+    private func potionName(_ language: GameLanguage) -> String {
+      switch language {
+      case .english: "Fixture Potion"
+      case .german: "Fixture Heiltrank"
+      case .french: "Fixture Potion française"
+      case .japanese: "フィクスチャ・ポーション"
+      }
+    }
+    private func waterName(_ language: GameLanguage) -> String {
+      switch language {
+      case .english: "Fixture Water"
+      case .german: "Fixture Wasser"
+      case .french: "Fixture Eau"
+      case .japanese: "フィクスチャ・ウォーター"
+      }
+    }
+    private func item(_ language: GameLanguage) -> EntitySummary {
       EntitySummary(
-        id: EntityID(kind: .item, row: 1), name: "Fixture Potion", category: "Test medicine",
+        id: EntityID(kind: .item, row: 1), name: potionName(language), category: "Test medicine",
         level: 10)
     }
-    private var recipe: EntitySummary {
+    private func recipe(_ language: GameLanguage) -> EntitySummary {
       EntitySummary(
-        id: EntityID(kind: .recipe, row: 2), name: "Fixture Potion", category: "Test alchemy",
+        id: EntityID(kind: .recipe, row: 2), name: potionName(language), category: "Test alchemy",
         level: 12)
     }
     private var action: EntitySummary {
       EntitySummary(id: EntityID(kind: .action, row: 3), name: "Fixture Sprint", category: "System")
     }
-    private func entry(for kind: EntityKind) -> EntitySummary {
-      kind == .action ? action : kind == .recipe ? recipe : item
+    private func entry(for kind: EntityKind, language: GameLanguage) -> EntitySummary {
+      kind == .action ? action : kind == .recipe ? recipe(language) : item(language)
     }
-    func search(kind: EntityKind, text: String, cursor: String?) async throws -> EntityPage {
+    func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage)
+      async throws -> EntityPage
+    {
       EntityPage(
         entries: text.localizedCaseInsensitiveContains("fixture")
-          ? [entry(for: kind)] : [])
+          || entry(for: kind, language: language).name.localizedCaseInsensitiveContains(text)
+          ? [entry(for: kind, language: language)] : [])
     }
-    func browse(kind: EntityKind, after: Int?) async throws -> EntityPage {
-      EntityPage(entries: [entry(for: kind)])
+    func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage {
+      EntityPage(entries: [entry(for: kind, language: language)])
     }
-    func recipes(item: Int, cursor: String?) async throws -> EntityPage {
-      EntityPage(entries: item == 1 ? [recipe] : [])
+    func recipes(item: Int, cursor: String?, language: GameLanguage) async throws -> EntityPage {
+      EntityPage(entries: item == 1 ? [recipe(language)] : [])
     }
-    func detail(_ id: EntityID, refresh: Bool) async throws -> EntityDetail {
+    func detail(_ id: EntityID, refresh: Bool, language: GameLanguage) async throws -> EntityDetail
+    {
       if id.kind == .action {
         return EntityDetail(
           entity: action,
@@ -52,20 +72,21 @@
       let fields: [String: FieldValue]
       if id.kind == .recipe {
         fields = [
-          "ItemResult": reference(row: 1, name: "Fixture Potion"),
-          "Ingredient": .array([reference(row: 3, name: "Fixture Water")]),
+          "ItemResult": reference(row: 1, name: potionName(language)),
+          "Ingredient": .array([reference(row: 3, name: waterName(language))]),
           "AmountIngredient": .array([.number(2)]), "AmountResult": .number(1),
         ]
       } else {
         fields = [
-          "Name": .string(id.row == 1 ? "Fixture Potion" : "Fixture Water"),
+          "Name": .string(id.row == 1 ? potionName(language) : waterName(language)),
           "Description": .string("Deterministic UI test description."), "LevelEquip": .number(1),
           "StackSize": .number(99),
         ]
       }
       return EntityDetail(
         entity: EntitySummary(
-          id: id, name: id.kind == .recipe || id.row == 1 ? "Fixture Potion" : "Fixture Water"),
+          id: id,
+          name: id.kind == .recipe || id.row == 1 ? potionName(language) : waterName(language)),
         row: SheetRow(rowID: id.row, fields: fields), schema: "test", version: "test",
         isStale: false)
     }

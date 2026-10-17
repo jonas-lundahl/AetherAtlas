@@ -9,6 +9,25 @@ import Observation
   let library: LibraryModel
   let updates: AppUpdateModel
   let navigation = EntityNavigation()
+  @ObservationIgnored private let preferences: UserDefaults
+  var language: GameLanguage {
+    didSet {
+      guard language != oldValue else { return }
+      preferences.set(language.rawValue, forKey: "gameLanguage")
+      search.language = language
+      detail.language = objectLanguage
+    }
+  }
+  private var objectLanguages: [EntityID: GameLanguage] = [:]
+  var objectLanguageOverride: GameLanguage? {
+    get { navigation.current.flatMap { objectLanguages[$0.id] } }
+    set {
+      guard let id = navigation.current?.id else { return }
+      objectLanguages[id] = newValue
+      detail.language = objectLanguage
+    }
+  }
+  var objectLanguage: GameLanguage { objectLanguageOverride ?? language }
   var section: BrowserSection = .category(.item)
   var searchFocus = 0
   init() {
@@ -22,6 +41,7 @@ import Observation
     var repo: any GameRepository = LiveGameRepository(cache: cache)
     var libraryFile = support.appendingPathComponent("library.json")
     var releaseClient: any AppReleaseChecking = GitHubReleaseClient()
+    var preferences = UserDefaults.standard
     #if DEBUG
       if ProcessInfo.processInfo.environment["AETHER_UI_TESTING"] == "1"
         || NSClassFromString("XCTestCase") != nil
@@ -30,12 +50,17 @@ import Observation
         releaseClient = UITestReleaseChecker()
         let session =
           ProcessInfo.processInfo.environment["AETHER_UI_TEST_SESSION"] ?? UUID().uuidString
+        preferences = UserDefaults(suiteName: "AetherAtlas-UI-\(session)")!
         libraryFile = fm.temporaryDirectory.appendingPathComponent(
           "AetherAtlas-UI-\(session)/library.json")
       }
     #endif
-    search = SearchModel(repository: repo)
-    detail = DetailModel(repository: repo)
+    self.preferences = preferences
+    let language =
+      preferences.string(forKey: "gameLanguage").flatMap(GameLanguage.init(rawValue:)) ?? .english
+    self.language = language
+    search = SearchModel(repository: repo, language: language)
+    detail = DetailModel(repository: repo, language: language)
     library = LibraryModel(store: LibraryStore(file: libraryFile))
     updates = AppUpdateModel(
       currentVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")

@@ -9,7 +9,7 @@ struct BrowserView: View {
     @Bindable var search = workspace.search
     NavigationSplitView {
       sidebar
-        .navigationSplitViewColumnWidth(min: 175, ideal: 200, max: 260)
+        .navigationSplitViewColumnWidth(min: 200, ideal: 200, max: 260)
     } content: {
       results
         .navigationSplitViewColumnWidth(min: 300, ideal: 390, max: 620)
@@ -95,6 +95,13 @@ struct BrowserView: View {
     .navigationTitle("Aether Atlas")
     .safeAreaInset(edge: .bottom) {
       VStack(alignment: .leading, spacing: 5) {
+        Text("Default game language").font(.caption).foregroundStyle(.secondary)
+        GameLanguagePicker(
+          label: "Default game language", selection: $workspace.language,
+          identifier: "gameLanguagePicker"
+        )
+        .fixedSize()
+        .padding(.bottom, 10)
         Label("XIVAPI v2", systemImage: "network").font(.caption.weight(.medium))
         Text("An Eorzean field guide").font(.caption2).foregroundStyle(.tertiary)
       }.frame(maxWidth: .infinity, alignment: .leading).padding(16)

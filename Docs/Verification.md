@@ -80,3 +80,17 @@ The user selected public visibility for `jonas-lundahl/AetherAtlas` so release c
 - **Formatting:** Swift formatting and whitespace checks passed for the changed sources.
 
 Signing and notarization are unchanged: downloaded updates use ad-hoc signing and may require macOS approval. Installation is manual, and Intel runtime behavior remains unverified.
+
+## Global and per-object game languages — 17 October 2026
+
+Added compact, native flag groups for English (🇬🇧), German (🇩🇪), French (🇫🇷), and Japanese (🇯🇵), the localizations available in XIVAPI's global dataset. The sidebar saves the global default across launches; an object's group records a session choice for that stable entity identity. An explicit object choice survives back/forward navigation and global default changes. Each group has exactly four flags, sizes to its contents, and provides native per-segment tooltips with language names. There is no separate default option in the object group.
+
+Search/browse requests and their pagination use the global default. Details, related recipe pages, and source links use the effective object language. Language-specific URLs separate cached responses; changing language resets the applicable state and generation guards reject obsolete responses. Existing favorites/history identities and versioned persistence are preserved. Debug UI launches isolate language preferences as well as library files.
+
+- **Xcode:** 52 core/native tests passed, including every request type and language, localized cache separation, search pagination reset, obsolete language responses, related recipe languages, object override/default behavior, and native flag tooltip metadata. Result: `build/Logs/Test/Test-AetherAtlas-2026.10.17_11-52-25-+0200.xcresult`.
+- **SwiftPM:** 48 tests passed with complete strict concurrency checking. Compiler/package caches were redirected to temporary directories for the workspace sandbox.
+- **Native UI:** the four existing browsing/description/update tests passed in the full run. Both new language tests passed in a focused rerun after correcting string assertions for native numeric selection values. The tests cover all four languages, exactly four options, compact widths, global preference restoration, localized recipe/ingredient navigation, independent object choices, and back navigation. Results: `Test-AetherAtlas-UI-2026.10.17_11-53-13-+0200.xcresult` (existing tests) and `Test-AetherAtlas-UI-2026.10.17_11-54-56-+0200.xcresult` (language tests), under `build/Logs/Test/`.
+- **Live inspection:** verified compact groups in the running Debug app's dark appearance and native accessibility tree. Selecting Japanese for **Fire Shard** loaded **ファイアシャード**, its Japanese description, and Japanese category while the global selection and results remained English. The accessibility tree exposes native radio buttons and each language name as its help text.
+- **Formatting:** strict Swift formatting and `git diff --check` passed. The generated Xcode project includes the shared native language control.
+
+App controls remain in English. Object language choices last only for the current session; saved summary names refresh when their entity is opened. Exact macOS 26.0, Intel runtime behavior, and a full spoken VoiceOver audit remain unverified.

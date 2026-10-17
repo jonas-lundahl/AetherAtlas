@@ -6,6 +6,7 @@ A native macOS encyclopedia for Final Fantasy XIV, powered by **XIVAPI v2**. Ope
 
 - Native three-pane SwiftUI window with resizable sidebar, results, and details; system light/dark appearance.
 - Name search scoped by sidebar category: **Items, Recipes, Quests, NPCs, Actions**. The search field is always accessible; switch categories to apply the same name to another sheet.
+- Flag button groups select **English (🇬🇧), Deutsch (🇩🇪), Français (🇫🇷), or 日本語 (🇯🇵)**; hover a flag to see its language name. **Default game language**, at the bottom of the sidebar, sets the language for searches and newly opened objects and is remembered across launches. **Object language**, above the details, changes only the current entity and its related recipes. Both groups contain exactly four flags. Object choices last for the session and follow their entity through back/forward navigation. App controls remain in English.
 - 300 ms debounce, cancellation, response-order guards, relevance order, and cursor pagination. Empty search browses the selected sheet in row order. Sort the **loaded** results by name or level.
 - Item descriptions, icons, item/equip levels, equipment slots, class/job restrictions, attributes, damage/defense, inventory flags, materia slots, stack size, and reference vendor values when supplied.
 - Native selectable action/item descriptions retain XIVAPI’s colors, emphasis, and line breaks. Game highlight colors are preserved in dark appearance and adjusted for contrast on light surfaces; plain descriptions remain available as a fallback.
@@ -100,7 +101,7 @@ xcodebuild -project AetherAtlas.xcodeproj -scheme AetherAtlas-UI \
 swift test -Xswiftc -strict-concurrency=complete
 ```
 
-UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, and native formatted action descriptions. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
+UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, and global/object language switching with default preference restoration. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
 
 Format sources with Xcode’s bundled tool:
 
@@ -141,6 +142,8 @@ Official sources: [welcome](https://v2.xivapi.com/docs/welcome/), [search](https
 
 The client uses `https://v2.xivapi.com/api`. Search uses `/search?sheets=Item&query=Name~"Potion"` with explicit fields and a limit of 50; subsequent pages send `cursor`. Browsing uses `/sheet/{sheet}` with `after`; details use `/sheet/{sheet}/{row}`. Recipes search `ItemResult=<item ID>` and read the verified `Ingredient[]` / `AmountIngredient[]` fields. NPC names use `Singular`; recipe name search uses `ItemResult.Name`. Icons use the returned game path through `/asset?path=...&format=png`.
 
+All game-data requests, including cursor pages and related recipes, carry the selected `language` (`en`, `de`, `fr`, or `ja`). These are the four localizations [currently served by XIVAPI's global dataset](https://v2.xivapi.com/docs/guides/concepts/#editions--localisations). Search matches names in the global default language. Changing that default restarts search pagination and reloads an open object whose language has not been explicitly selected; an explicit object choice stays selected. Changing an object's language reloads its details and related recipes independently of search. Newly opened entities use the global default unless they already have a session choice. Cache keys include the language, and obsolete responses cannot replace the new language. Favorites and history keep stable sheet/row identities and the names last saved; opening an entry refreshes its summary in the object's selected language.
+
 The public endpoints were verified without authentication; the OpenAPI schema declares no security scheme. Errors decode the documented `code`/`message` shape. HTTP 429 surfaces `Retry-After` without automatic polling. No numeric service-wide rate limit was found in the examined official docs. Field projection avoids unnecessary expanded relationships; identical requests share one task. Search and sheet ordering follow the API; name/level sorting is local to loaded rows.
 
 Descriptions request both `Description` and `Description@as(html)` (via `transient` for actions). A small Foundation parser converts the API’s inline HTML into sendable native text runs; SwiftUI renders those as an `AttributedString`, with text selection and the system body font. Supported formatting includes `rgb`/`rgba` and six-digit hex colors, line breaks, bold/italic/underline/strikethrough, nested spans, and XML/numeric entities. Unsupported or malformed fragments fall back to the accompanying plain text. Parsing is bounded in size/depth, rejects document/entity declarations, and never loads web resources. No phrase-specific highlighting is used. The changed field projection creates a new cache key, so an old plain-only response does not hide the upgrade.
@@ -150,6 +153,8 @@ Requests use the latest available game/schema data, preserve returned schema/ver
 ## Persistence, cache, and privacy
 
 Favorites/history use a version-1 Codable JSON document with atomic writes, keyed by entity kind + row ID. A failed write does not publish unsaved changes. Corrupt or newer-version documents are preserved and an error is shown; version migrations belong in `LibraryStore.load()`.
+
+The game-language preference is stored separately in the app's local user defaults and falls back to English if unset or unsupported. Debug UI tests isolate both preferences and the saved library from real user data.
 
 With App Sandbox, files live under the application container:
 

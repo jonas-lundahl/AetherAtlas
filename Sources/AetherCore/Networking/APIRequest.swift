@@ -41,10 +41,16 @@ public struct APIRequest: Sendable {
       + text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(
         of: "\"", with: "\\\"") + "\""
   }
-  public static func search(kind: EntityKind, text: String, cursor: String? = nil, limit: Int = 50)
+  public static func search(
+    kind: EntityKind, text: String, cursor: String? = nil, limit: Int = 50,
+    language: GameLanguage = .english
+  )
     -> Self
   {
-    var p = common(kind.summaryFields) + [URLQueryItem(name: "limit", value: String(limit))]
+    var p =
+      common(kind.summaryFields, language: language) + [
+        URLQueryItem(name: "limit", value: String(limit))
+      ]
     if let cursor {
       p.append(URLQueryItem(name: "cursor", value: cursor))
     } else {
@@ -55,20 +61,28 @@ public struct APIRequest: Sendable {
     }
     return Self(path: "search", parameters: p)
   }
-  public static func browse(kind: EntityKind, after: Int? = nil, limit: Int = 50) -> Self {
-    var p = common(kind.summaryFields) + [.init(name: "limit", value: String(limit))]
+  public static func browse(
+    kind: EntityKind, after: Int? = nil, limit: Int = 50, language: GameLanguage = .english
+  ) -> Self {
+    var p =
+      common(kind.summaryFields, language: language) + [.init(name: "limit", value: String(limit))]
     if let after { p.append(.init(name: "after", value: String(after))) }
     return Self(path: "sheet/\(kind.rawValue)", parameters: p)
   }
-  public static func detail(_ id: EntityID) -> Self {
-    var p = common(id.kind.detailFields)
+  public static func detail(_ id: EntityID, language: GameLanguage = .english) -> Self {
+    var p = common(id.kind.detailFields, language: language)
     if id.kind == .action {
       p.append(.init(name: "transient", value: "Description,Description@as(html)"))
     }
     return Self(path: "sheet/\(id.kind.rawValue)/\(id.row)", parameters: p)
   }
-  public static func recipes(item: Int, cursor: String? = nil) -> Self {
-    var p = common(EntityKind.recipe.summaryFields) + [.init(name: "limit", value: "50")]
+  public static func recipes(item: Int, cursor: String? = nil, language: GameLanguage = .english)
+    -> Self
+  {
+    var p =
+      common(EntityKind.recipe.summaryFields, language: language) + [
+        .init(name: "limit", value: "50")
+      ]
     if let cursor {
       p.append(.init(name: "cursor", value: cursor))
     } else {
@@ -83,8 +97,8 @@ public struct APIRequest: Sendable {
       path: "asset",
       parameters: [.init(name: "path", value: path), .init(name: "format", value: "png")])
   }
-  private static func common(_ fields: String) -> [URLQueryItem] {
-    [.init(name: "fields", value: fields), .init(name: "language", value: "en")]
+  private static func common(_ fields: String, language: GameLanguage) -> [URLQueryItem] {
+    [.init(name: "fields", value: fields), .init(name: "language", value: language.rawValue)]
   }
 }
 
