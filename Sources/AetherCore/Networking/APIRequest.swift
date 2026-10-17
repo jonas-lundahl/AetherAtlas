@@ -62,7 +62,9 @@ public struct APIRequest: Sendable {
   }
   public static func detail(_ id: EntityID) -> Self {
     var p = common(id.kind.detailFields)
-    if id.kind == .action { p.append(.init(name: "transient", value: "Description")) }
+    if id.kind == .action {
+      p.append(.init(name: "transient", value: "Description,Description@as(html)"))
+    }
     return Self(path: "sheet/\(id.kind.rawValue)/\(id.row)", parameters: p)
   }
   public static func recipes(item: Int, cursor: String? = nil) -> Self {

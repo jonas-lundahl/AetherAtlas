@@ -51,7 +51,7 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     switch self {
     case .item:
       summaryFields
-        + ",Description,ItemSearchCategory.Name,ClassJobCategory.Name,EquipSlotCategory,BaseParam[].Name,BaseParamValue,DamagePhys,DamageMag,DefensePhys,DefenseMag,StackSize,PriceMid,PriceLow,CanBeHq,IsUntradable,IsUnique,MateriaSlotCount"
+        + ",Description,Description@as(html),ItemSearchCategory.Name,ClassJobCategory.Name,EquipSlotCategory,BaseParam[].Name,BaseParamValue,DamagePhys,DamageMag,DefensePhys,DefenseMag,StackSize,PriceMid,PriceLow,CanBeHq,IsUntradable,IsUnique,MateriaSlotCount"
     case .recipe:
       summaryFields
         + ",Ingredient[].Name,Ingredient[].Icon,AmountIngredient,CanHq,RequiredCraftsmanship,RequiredControl,IsExpert"
@@ -236,4 +236,18 @@ public struct EntityDetail: Sendable {
   public let schema: String?
   public let version: String?
   public let isStale: Bool
+  public let description: GameDescription
+
+  public init(
+    entity: EntitySummary, row: SheetRow, schema: String?, version: String?, isStale: Bool
+  ) {
+    self.entity = entity
+    self.row = row
+    self.schema = schema
+    self.version = version
+    self.isStale = isStale
+    let fields = entity.id.kind == .action ? (row.transient ?? [:]) : row.fields
+    description = GameDescription(
+      plainText: fields["Description"]?.string, html: fields["Description@as(html)"]?.string)
+  }
 }

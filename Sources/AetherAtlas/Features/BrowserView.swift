@@ -72,6 +72,7 @@ struct BrowserView: View {
       Section {
         ForEach(EntityKind.allCases) { kind in
           Label(kind.title, systemImage: kind.symbol).tag(BrowserSection.category(kind))
+            .accessibilityIdentifier("category-\(kind.rawValue)")
         }
       } header: {
         Text("Game Database")

@@ -13,18 +13,36 @@
         id: EntityID(kind: .recipe, row: 2), name: "Fixture Potion", category: "Test alchemy",
         level: 12)
     }
+    private var action: EntitySummary {
+      EntitySummary(id: EntityID(kind: .action, row: 3), name: "Fixture Sprint", category: "System")
+    }
+    private func entry(for kind: EntityKind) -> EntitySummary {
+      kind == .action ? action : kind == .recipe ? recipe : item
+    }
     func search(kind: EntityKind, text: String, cursor: String?) async throws -> EntityPage {
       EntityPage(
         entries: text.localizedCaseInsensitiveContains("fixture")
-          ? [kind == .recipe ? recipe : item] : [])
+          ? [entry(for: kind)] : [])
     }
     func browse(kind: EntityKind, after: Int?) async throws -> EntityPage {
-      EntityPage(entries: [kind == .recipe ? recipe : item])
+      EntityPage(entries: [entry(for: kind)])
     }
     func recipes(item: Int, cursor: String?) async throws -> EntityPage {
       EntityPage(entries: item == 1 ? [recipe] : [])
     }
     func detail(_ id: EntityID, refresh: Bool) async throws -> EntityDetail {
+      if id.kind == .action {
+        return EntityDetail(
+          entity: action,
+          row: SheetRow(
+            rowID: id.row, fields: ["Name": .string("Fixture Sprint")],
+            transient: [
+              "Description": .string("Increases movement speed.\nAdditional Effect: Grants Jog."),
+              "Description@as(html)": .string(
+                #"Increases movement speed.<br><span style="color:rgba(0,204,34,1);">Additional Effect:</span> Grants <span style="color:rgba(255,255,102,1);">Jog</span>."#
+              ),
+            ]), schema: "test", version: "test", isStale: false)
+      }
       let fields: [String: FieldValue]
       if id.kind == .recipe {
         fields = [

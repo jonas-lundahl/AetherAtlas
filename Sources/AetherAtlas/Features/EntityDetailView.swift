@@ -116,9 +116,8 @@ struct EntityDetailView: View {
       Metric(label: "STACK SIZE", value: row["StackSize"].integer?.formatted() ?? "—")
     }.padding(.vertical, 15).background(
       .quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
-    if let description = row["Description"].string, !description.isEmpty {
-      Text(description).font(.body).lineSpacing(5).textSelection(.enabled).fixedSize(
-        horizontal: false, vertical: true)
+    if !detail.description.isEmpty {
+      GameDescriptionText(description: detail.description)
     }
     DetailSection("Item information") {
       if let jobs = row["ClassJobCategory"].referenceName, !jobs.isEmpty {
@@ -223,8 +222,8 @@ struct EntityDetailView: View {
   }
   @ViewBuilder private func actionSections(_ detail: EntityDetail) -> some View {
     let row = detail.row
-    if let description = row.transient?["Description"]?.string, !description.isEmpty {
-      Text(description).lineSpacing(5).textSelection(.enabled)
+    if !detail.description.isEmpty {
+      GameDescriptionText(description: detail.description)
     }
     DetailSection("Action information") {
       if let job = row["ClassJob"].referenceName, !job.isEmpty {

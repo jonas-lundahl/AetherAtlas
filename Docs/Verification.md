@@ -55,3 +55,15 @@ Remaining limits: exact macOS 26.0 and Intel runtime tests, a complete spoken Vo
 Replaced the closed-book icon with a simplified open book in three-quarter view, emitting broad cyan aether ribbons against a quiet full-bleed navy background. The user requested reduced detail for small sizes and no painted border or frame. The chosen master was produced using the built-in image generator and saved at `Design/AppIcon/aether-atlas-master.png`; the exact final prompt is in `Design/AppIcon/prompt.txt`.
 
 `Scripts/MakeAppIcon.swift` now mechanically resizes that master instead of drawing the old bordered design. All 10 macOS asset slots were checked against their required pixel dimensions; 32 px and 128 px outputs were visually inspected. The Release archive rebuilt successfully with the new icon, and signing validation passed. Application behavior was unchanged, so the existing functional tests were not rerun for this artwork-only update. The existing running browsing session was preserved; the new bundle icon is available on relaunch.
+
+## Native game text formatting — 17 October 2026
+
+Added formatted descriptions for actions and items using the documented `Description@as(html)` projection alongside the original plain text. `GameDescription` converts the API fragment into native sendable text runs before presentation. `GameDescriptionText` maps color and emphasis into selectable SwiftUI attributed text. No WebView, remote resource loading, or hardcoded effect-label detection is used. Unsupported/malformed fragments retain the plain description. Bright game colors are preserved in dark appearance and darkened by hue-preserving scaling on light surfaces.
+
+- **Xcode:** 36 core/native-attributed-text tests passed, including Sprint's captured API response, exact highlight colors, nested style restoration, entity/line-break handling, plain fallback, request projection, and light-appearance color mapping.
+- **SwiftPM:** 34 core tests passed, including the final bounded-parser and unsupported-markup cases. The two SwiftUI-specific tests run only in Xcode.
+- **Native UI:** all 3 tests passed, including opening a formatted action description and verifying its accessible, markup-free text. Result bundles: `Test-AetherAtlas-2026.10.17_10-47-34-+0200.xcresult` and `Test-AetherAtlas-UI-2026.10.17_10-48-39-+0200.xcresult`, under `build/Logs/Test/`.
+- **Release:** universal Release archive rebuilt successfully; code-signature validation and Swift formatting checks passed. The sharing ZIP was regenerated and every bundled file compared with the archived application.
+- **Live verification:** opened Sprint from the real API in the rebuilt Release app. The screenshot visibly shows green Duration / Additional Effect / Jog Effect labels, yellow Jog, and the original line breaks. The app was left open on that action.
+
+Files: new domain/parser and shared SwiftUI text component; action/item request projections and detail mapping/views; captured Sprint fixture and parser/native-attribute/UI tests; Xcode source registration; README. Formatting coverage is the documented inline subset; unfamiliar future markup falls back to plain text.

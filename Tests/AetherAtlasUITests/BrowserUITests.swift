@@ -51,4 +51,22 @@ import XCTest
     XCTAssertEqual(app.searchFields.firstMatch.value as? String, "")
     XCTAssertTrue(app.descendants(matching: .any)["entity-Item:1"].waitForExistence(timeout: 5))
   }
+  func testFormattedActionDescriptionIsNativeReadableText() {
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let actions = app.descendants(matching: .any).matching(identifier: "category-Action").firstMatch
+    XCTAssertTrue(actions.waitForExistence(timeout: 10))
+    actions.click()
+    let sprint = app.descendants(matching: .any)["entity-Action:3"]
+    XCTAssertTrue(sprint.waitForExistence(timeout: 5))
+    sprint.click()
+    let description = app.staticTexts.matching(identifier: "gameDescription").firstMatch
+    XCTAssertTrue(description.waitForExistence(timeout: 5))
+    let text = (description.value as? String) ?? description.label
+    XCTAssertEqual(text, "Increases movement speed.\nAdditional Effect: Grants Jog.")
+    XCTAssertFalse(text.contains("<span"))
+  }
+
 }

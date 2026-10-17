@@ -8,6 +8,7 @@ A native macOS encyclopedia for Final Fantasy XIV, powered by **XIVAPI v2**. Ope
 - Name search scoped by sidebar category: **Items, Recipes, Quests, NPCs, Actions**. The search field is always accessible; switch categories to apply the same name to another sheet.
 - 300 ms debounce, cancellation, response-order guards, relevance order, and cursor pagination. Empty search browses the selected sheet in row order. Sort the **loaded** results by name or level.
 - Item descriptions, icons, item/equip levels, equipment slots, class/job restrictions, attributes, damage/defense, inventory flags, materia slots, stack size, and reference vendor values when supplied.
+- Native selectable action/item descriptions retain XIVAPI’s colors, emphasis, and line breaks. Game highlight colors are preserved in dark appearance and adjusted for contrast on light surfaces; plain descriptions remain available as a fallback.
 - Item → producing recipe → ingredient item navigation. Recipe discipline, level, yield, requirements, and crystals. Quest → named issuer navigation. Action descriptions and timings. NPC name/title details.
 - Favorites and a deduplicated, most-recent-first history of the last 100 entities, saved across restarts. Names and summary metadata refresh when a saved entity is opened.
 - Bounded memory/disk response and icon caching, ETag revalidation, cancellation-safe shared downloads, and labeled stale responses during connection failures.
@@ -78,7 +79,7 @@ xcodebuild -project AetherAtlas.xcodeproj -scheme AetherAtlas-UI \
 swift test -Xswiftc -strict-concurrency=complete
 ```
 
-UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, and favorites after relaunch. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
+UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, and native formatted action descriptions. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
 
 Format sources with Xcode’s bundled tool:
 
@@ -120,6 +121,8 @@ Official sources: [welcome](https://v2.xivapi.com/docs/welcome/), [search](https
 The client uses `https://v2.xivapi.com/api`. Search uses `/search?sheets=Item&query=Name~"Potion"` with explicit fields and a limit of 50; subsequent pages send `cursor`. Browsing uses `/sheet/{sheet}` with `after`; details use `/sheet/{sheet}/{row}`. Recipes search `ItemResult=<item ID>` and read the verified `Ingredient[]` / `AmountIngredient[]` fields. NPC names use `Singular`; recipe name search uses `ItemResult.Name`. Icons use the returned game path through `/asset?path=...&format=png`.
 
 The public endpoints were verified without authentication; the OpenAPI schema declares no security scheme. Errors decode the documented `code`/`message` shape. HTTP 429 surfaces `Retry-After` without automatic polling. No numeric service-wide rate limit was found in the examined official docs. Field projection avoids unnecessary expanded relationships; identical requests share one task. Search and sheet ordering follow the API; name/level sorting is local to loaded rows.
+
+Descriptions request both `Description` and `Description@as(html)` (via `transient` for actions). A small Foundation parser converts the API’s inline HTML into sendable native text runs; SwiftUI renders those as an `AttributedString`, with text selection and the system body font. Supported formatting includes `rgb`/`rgba` and six-digit hex colors, line breaks, bold/italic/underline/strikethrough, nested spans, and XML/numeric entities. Unsupported or malformed fragments fall back to the accompanying plain text. Parsing is bounded in size/depth, rejects document/entity declarations, and never loads web resources. No phrase-specific highlighting is used. The changed field projection creates a new cache key, so an old plain-only response does not hide the upgrade.
 
 Requests use the latest available game/schema data, preserve returned schema/version metadata, and expose it in Source information. A canonical schema pin is deliberately not hardcoded across future game patches. A future release should reverify field mappings after game/schema changes; the API supports pinning if a fixed dataset is desired.
 
