@@ -56,9 +56,54 @@ public struct LiveGameRepository: GameRepository {
     let (envelope, stale) = try await decoded(
       DetailEnvelope.self, request: .detail(id, language: language), refresh: refresh)
     guard envelope.rowID == id.row else { throw APIError.invalidResponse }
+    if id.kind == .quest {
+      async let journal = questJournal(envelope.row, refresh: refresh, language: language)
+      async let experience = questExperience(envelope.row, refresh: refresh, language: language)
+      let (text, xp) = try await (journal, experience)
+      return EntityDetail(
+        entity: envelope.row.summary(kind: .quest), row: envelope.row, schema: envelope.schema,
+        version: envelope.version, isStale: stale || text.stale || xp.stale,
+        questJournal: text.value, questExperience: xp.value,
+        questContentError: text.failed || xp.failed
+          ? "Some quest details couldn’t be loaded. Refresh to try again." : nil)
+    }
     return EntityDetail(
       entity: envelope.row.summary(kind: id.kind), row: envelope.row, schema: envelope.schema,
       version: envelope.version, isStale: stale)
+  }
+  private func questJournal(_ row: SheetRow, refresh: Bool, language: GameLanguage) async throws
+    -> (value: QuestJournal?, stale: Bool, failed: Bool)
+  {
+    guard let id = row["Id"].string,
+      let request = APIRequest.questJournal(id: id, language: language)
+    else { return (nil, false, true) }
+    do {
+      let (envelope, stale) = try await decoded(
+        BrowseEnvelope.self, request: request, refresh: refresh)
+      try Task.checkCancellation()
+      return (QuestJournal(rows: envelope.rows), stale, false)
+    } catch {
+      try Task.checkCancellation()
+      return (nil, false, true)
+    }
+  }
+  private func questExperience(_ row: SheetRow, refresh: Bool, language: GameLanguage) async throws
+    -> (value: Int?, stale: Bool, failed: Bool)
+  {
+    guard let factor = row["ExpFactor"].integer, factor >= 0 else { return (nil, false, true) }
+    if factor == 0 { return (0, false, false) }
+    guard let level = row.summary(kind: .quest).level, level > 0 else { return (nil, false, true) }
+    do {
+      let (growth, stale) = try await decoded(
+        DetailEnvelope.self, request: .questGrowth(level: level, language: language),
+        refresh: refresh)
+      try Task.checkCancellation()
+      let value = QuestPresentation.experience(factor: factor, growth: growth.row)
+      return (value, stale, value == nil)
+    } catch {
+      try Task.checkCancellation()
+      return (nil, false, true)
+    }
   }
   public func recipes(item: Int, cursor: String? = nil, language: GameLanguage = .english)
     async throws -> EntityPage

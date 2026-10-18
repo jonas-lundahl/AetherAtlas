@@ -11,6 +11,7 @@ A native macOS encyclopedia for Final Fantasy XIV, powered by **XIVAPI v2**. Ope
 - Item descriptions, icons, item/equip levels, equipment slots, class/job restrictions, attributes, damage/defense, inventory flags, materia slots, stack size, and reference vendor values when supplied.
 - Native selectable action/item descriptions retain XIVAPI’s colors, emphasis, and line breaks. Game highlight colors are preserved in dark appearance and adjusted for contrast on light surfaces; plain descriptions remain available as a fallback.
 - Item → producing recipe → ingredient item navigation. Recipe discipline, level, yield, requirements, and crystals. Quest → named issuer navigation. Action descriptions and timings. NPC name/title details.
+- Quests have a dedicated journal layout: level/title, artwork capped at 180 points high with its aspect ratio preserved, EXP/gil and item rewards, selectable description, and ordered objectives. Expansion, location, and issuer links follow below. Result thumbnails use the available-to-begin quest marker (MSQ, sidequest, blue unlock, etc.); class/job quests use the silver **set 9** emblems. Artwork, game EXP/gil icons, and quest/job icons load on demand from XIVAPI, with no game assets bundled.
 - Favorites and a deduplicated, most-recent-first history of the last 100 entities, saved across restarts. Names and summary metadata refresh when a saved entity is opened.
 - Bounded memory/disk response and icon caching, ETag revalidation, cancellation-safe shared downloads, and labeled stale responses during connection failures.
 - Native result selection, arrow-key navigation, Return to open, context menus, accessible button labels, and selectable detail text.
@@ -101,7 +102,7 @@ xcodebuild -project AetherAtlas.xcodeproj -scheme AetherAtlas-UI \
 swift test -Xswiftc -strict-concurrency=complete
 ```
 
-UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, and global/object language switching with default preference restoration. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
+UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
 
 Format sources with Xcode’s bundled tool:
 
@@ -148,6 +149,8 @@ The public endpoints were verified without authentication; the OpenAPI schema de
 
 Descriptions request both `Description` and `Description@as(html)` (via `transient` for actions). A small Foundation parser converts the API’s inline HTML into sendable native text runs; SwiftUI renders those as an `AttributedString`, with text selection and the system body font. Supported formatting includes `rgb`/`rgba` and six-digit hex colors, line breaks, bold/italic/underline/strikethrough, nested spans, and XML/numeric entities. Unsupported or malformed fragments fall back to the accompanying plain text. Parsing is bounded in size/depth, rejects document/entity declarations, and never loads web resources. No phrase-specific highlighting is used. The changed field projection creates a new cache key, so an old plain-only response does not hide the upgrade.
 
+Quest thumbnails use the available-to-begin image at `EventIconType.NpcIconAvailable.id + 1` for the standard marker ranges (the range base itself is a developer placeholder). Class/job journal genre icon IDs map to the corresponding `062000 + ClassJob` silver emblem, matching **set 9** in the [Dictionary of Icons](https://ffxiv.gamerescape.com/wiki/Dictionary_of_Icons). `Quest.Icon` is reserved for the wide journal banner. Quest text is fetched separately from `quest/{first three digits of Id suffix}/{Id}`, with the sheet-name slashes encoded as `%2F`. Live responses verified the raw `unknown0` text keys and `unknown4`/`unknown4@as(html)` values. The journal displays the initial accepted description (`SEQ_01`, falling back to `SEQ_00`) and the ordered `TODO_00`–`TODO_23` objectives, without later narrative/dialogue. EXP uses XIVAPI’s [documented formula](https://github.com/xivapi/ffxiv-datamining/blob/master/docs/QuestExpReward.md): `ExpFactor × ParamGrow.ScaledQuestXP × ParamGrow.QuestExpModifier / 100` at the required quest level. Numbers reflect the current dataset, so older screenshots may show pre-adjustment rewards. Journal/EXP requests share the existing localized cache, refresh, cancellation and stale-copy behavior; partial failures retain the base quest and show a retry notice.
+
 Requests use the latest available game/schema data, preserve returned schema/version metadata, and expose it in Source information. A canonical schema pin is deliberately not hardcoded across future game patches. A future release should reverify field mappings after game/schema changes; the API supports pinning if a fixed dataset is desired.
 
 ## Persistence, cache, and privacy
@@ -178,7 +181,7 @@ Square Enix retains rights to game text and assets. Consult the current [Materia
 ## Known limits and next work
 
 - Search covers one category at a time. There is no aggregate cross-sheet search or advanced filter builder.
-- Vendor prices are item-sheet reference values, not confirmed acquisition locations. Shops, gathering locations, quest journal narratives, and reverse NPC-to-quest lookup are not implemented.
+- Vendor prices are item-sheet reference values, not confirmed acquisition locations. Shops, gathering locations, and reverse NPC-to-quest lookup are not implemented. Quest journals show the initial description and static objectives; character progress, level-scaled bonuses, and later narrative stages are not tracked.
 - NPC detail is intentionally limited to verified resident name/title fields; unnamed rows are skipped in browsing.
 - History and favorites retain summary metadata for offline lists; full details still require a cached response.
 - Exact macOS 26.0 execution, Intel execution, a full spoken VoiceOver audit, and distribution/notarization remain unverified. Native accessibility and keyboard workflows have automated/manual coverage.

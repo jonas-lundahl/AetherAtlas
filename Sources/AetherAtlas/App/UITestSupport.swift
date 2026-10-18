@@ -7,6 +7,12 @@
     }
   }
 
+  struct UITestIconTransport: HTTPTransport {
+    func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+      throw URLError(.resourceUnavailable)
+    }
+  }
+
   /// Explicit Debug-only test seam. Release builds contain neither the fixtures nor this switch.
   struct UITestRepository: GameRepository {
     private func potionName(_ language: GameLanguage) -> String {
@@ -38,8 +44,30 @@
     private var action: EntitySummary {
       EntitySummary(id: EntityID(kind: .action, row: 3), name: "Fixture Sprint", category: "System")
     }
+    private var questRow: SheetRow {
+      SheetRow(
+        rowID: 4,
+        fields: [
+          "Name": .string("Fixture Quest"), "ClassJobLevel": .array([.number(10), .number(0)]),
+          "GilReward": .number(2493),
+          "JournalGenre": .object(["fields": .object(["Name": .string("Botanist Quests")])]),
+          "Expansion": .object(["fields": .object(["Name": .string("A Realm Reborn")])]),
+          "PlaceName": .object(["fields": .object(["Name": .string("Gridania")])]),
+          "Reward": .array([reference(row: 1, name: "Fixture Potion")]),
+          "ItemCountReward": .array([.number(2)]),
+          "IssuerStart": .object([
+            "sheet": .string("ENpcResident"), "row_id": .number(5),
+            "fields": .object(["Singular": .string("Fixture Guildmaster")]),
+          ]),
+        ])
+    }
     private func entry(for kind: EntityKind, language: GameLanguage) -> EntitySummary {
-      kind == .action ? action : kind == .recipe ? recipe(language) : item(language)
+      if kind == .quest {
+        return EntitySummary(
+          id: EntityID(kind: .quest, row: 4), name: "Fixture Quest", category: "Botanist Quests",
+          level: 10)
+      }
+      return kind == .action ? action : kind == .recipe ? recipe(language) : item(language)
     }
     func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage)
       async throws -> EntityPage
@@ -57,6 +85,25 @@
     }
     func detail(_ id: EntityID, refresh: Bool, language: GameLanguage) async throws -> EntityDetail
     {
+      if id.kind == .quest {
+        let journal = QuestJournal(rows: [
+          SheetRow(
+            rowID: 1,
+            fields: [
+              "unknown0": .string("TEXT_FIXTURE_SEQ_01"),
+              "unknown4": .string("Learn the ways of the botanist from the guildmaster."),
+            ]),
+          SheetRow(
+            rowID: 24,
+            fields: [
+              "unknown0": .string("TEXT_FIXTURE_TODO_00"),
+              "unknown4": .string("Speak with the guildmaster."),
+            ]),
+        ])
+        return EntityDetail(
+          entity: entry(for: .quest, language: language), row: questRow, schema: "test",
+          version: "test", isStale: false, questJournal: journal, questExperience: 224640)
+      }
       if id.kind == .action {
         return EntityDetail(
           entity: action,

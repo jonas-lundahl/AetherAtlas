@@ -48,6 +48,7 @@ swift test -Xswiftc -strict-concurrency=complete
 - Preserve cancellation and response-order guards. Keep UI state on the main actor and shared mutable data actor isolated; address concurrency diagnostics rather than suppressing them.
 - Run `git diff --check` before finishing. Documentation-only changes do not require app builds or test runs.
 - Update `README.md` for changed user workflows and `Docs/Verification.md` for material verification results. Report checks actually run and distinguish binary metadata checks from runtime testing; exact macOS 26.0 and Intel runtime support have not been verified.
+- While iterating on uncommitted code, rewrite the current pass's entry in `Docs/Verification.md` from scratch to describe the final implementation, checks actually run, and remaining limits. Keep one cohesive record instead of appending follow-up notes for each iteration; remove superseded settings, abandoned approaches, and transient troubleshooting. Preserve previously committed verification records, and start a new entry once the preceding pass has been committed.
 
 ## Data and behavior
 

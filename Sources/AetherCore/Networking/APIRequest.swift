@@ -22,13 +22,27 @@ public struct APIRequest: Sendable {
   public static let baseURL = URL(string: "https://v2.xivapi.com/api")!
   public let path: String
   public let parameters: [URLQueryItem]
+  private let sheetName: String?
   public init(path: String, parameters: [URLQueryItem] = []) {
     self.path = path
     self.parameters = parameters
+    self.sheetName = nil
+  }
+  private init(sheetName: String, parameters: [URLQueryItem]) {
+    self.path = "sheet/\(sheetName)"
+    self.parameters = parameters
+    self.sheetName = sheetName
   }
   public func url(base: URL = Self.baseURL) throws -> URL {
     var components = URLComponents(
       url: base.appendingPathComponent(path), resolvingAgainstBaseURL: false)
+    if let sheetName {
+      let allowed = CharacterSet.urlPathAllowed.subtracting(CharacterSet(charactersIn: "/%"))
+      guard let sheet = sheetName.addingPercentEncoding(withAllowedCharacters: allowed) else {
+        throw APIError.invalidURL
+      }
+      components?.percentEncodedPath = base.path + "/sheet/" + sheet
+    }
     components?.queryItems = parameters
     // '+' has form semantics on the API; URLComponents leaves it literal by default.
     let encodedQuery = components?.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
@@ -96,6 +110,21 @@ public struct APIRequest: Sendable {
     Self(
       path: "asset",
       parameters: [.init(name: "path", value: path), .init(name: "format", value: "png")])
+  }
+  public static func questJournal(id: String, language: GameLanguage = .english) -> Self? {
+    guard id.utf8.count <= 100,
+      id.range(of: #"^[A-Za-z0-9]+_[0-9]{5}$"#, options: .regularExpression) != nil
+    else { return nil }
+    let folder = id.suffix(5).prefix(3)
+    return Self(
+      sheetName: "quest/\(folder)/\(id)",
+      parameters: common("unknown0,unknown4,unknown4@as(html)", language: language)
+        + [.init(name: "limit", value: "48")])
+  }
+  public static func questGrowth(level: Int, language: GameLanguage = .english) -> Self {
+    Self(
+      path: "sheet/ParamGrow/\(level)",
+      parameters: common("ScaledQuestXP,QuestExpModifier", language: language))
   }
   private static func common(_ fields: String, language: GameLanguage) -> [URLQueryItem] {
     [.init(name: "fields", value: fields), .init(name: "language", value: language.rawValue)]

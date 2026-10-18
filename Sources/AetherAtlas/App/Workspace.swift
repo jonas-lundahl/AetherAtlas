@@ -37,7 +37,7 @@ import Observation
     let caches = fm.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent(
       "AetherAtlas/Responses-v1")
     cache = ResponseCache(client: XIVAPIClient(), directory: caches)
-    icons = IconStore(responses: cache)
+    var iconResponses = cache
     var repo: any GameRepository = LiveGameRepository(cache: cache)
     var libraryFile = support.appendingPathComponent("library.json")
     var releaseClient: any AppReleaseChecking = GitHubReleaseClient()
@@ -53,8 +53,13 @@ import Observation
         preferences = UserDefaults(suiteName: "AetherAtlas-UI-\(session)")!
         libraryFile = fm.temporaryDirectory.appendingPathComponent(
           "AetherAtlas-UI-\(session)/library.json")
+        iconResponses = ResponseCache(
+          client: XIVAPIClient(transport: UITestIconTransport()),
+          directory: fm.temporaryDirectory.appendingPathComponent("AetherAtlas-UI-\(session)/Icons")
+        )
       }
     #endif
+    icons = IconStore(responses: iconResponses)
     self.preferences = preferences
     let language =
       preferences.string(forKey: "gameLanguage").flatMap(GameLanguage.init(rawValue:)) ?? .english

@@ -1,6 +1,38 @@
 import XCTest
 
 @MainActor final class BrowserUITests: XCTestCase {
+  func testQuestJournalReadingOrderAndRewardNavigation() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let quests = app.descendants(matching: .any).matching(identifier: "category-Quest").firstMatch
+    XCTAssertTrue(quests.waitForExistence(timeout: 10))
+    quests.click()
+    let quest = app.descendants(matching: .any)["entity-Quest:4"]
+    XCTAssertTrue(quest.waitForExistence(timeout: 5))
+    quest.click()
+    let name = app.staticTexts["entityDetailName"]
+    XCTAssertTrue(name.waitForExistence(timeout: 5))
+    let reward = app.staticTexts["Reward"]
+    let description = app.staticTexts["Description"]
+    let objectives = app.staticTexts["Objectives"]
+    XCTAssertTrue(reward.exists)
+    XCTAssertTrue(description.exists)
+    XCTAssertTrue(objectives.exists)
+    XCTAssertLessThan(name.frame.minY, reward.frame.minY)
+    XCTAssertLessThan(reward.frame.minY, description.frame.minY)
+    XCTAssertLessThan(description.frame.minY, objectives.frame.minY)
+    XCTAssertTrue(app.staticTexts["Speak with the guildmaster."].exists)
+    let item = app.buttons["Open Fixture Potion, Item"]
+    XCTAssertTrue(item.exists)
+    item.click()
+    XCTAssertTrue(app.buttons["Open Fixture Potion, Recipe"].waitForExistence(timeout: 5))
+    app.typeKey("[", modifierFlags: .command)
+    XCTAssertTrue(name.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Objectives"].exists)
+  }
   func testObjectLanguageOverridesDefaultAndSurvivesBackNavigation() {
     continueAfterFailure = false
     let app = XCUIApplication()

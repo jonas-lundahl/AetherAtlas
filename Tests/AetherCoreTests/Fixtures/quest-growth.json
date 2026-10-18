@@ -1,0 +1,22 @@
+{
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "version": "5c744a8d8daafb25",
+  "row_id": 76,
+  "fields": {
+    "AdditionalActions": 10,
+    "ApplyAction": 10,
+    "BaseSpeed": 372,
+    "CraftingLevel": 409,
+    "ExpToNext": 4066000,
+    "HpModifier": 2974,
+    "HuntingLogExpReward": 0,
+    "ItemLevelSync": 409,
+    "LevelModifier": 1140,
+    "MonsterNoteSeals": 0,
+    "MpModifier": 10000,
+    "ProperDungeon": 66,
+    "ProperGuildOrder": 10013,
+    "QuestExpModifier": 72,
+    "ScaledQuestXP": 780
+  }
+}

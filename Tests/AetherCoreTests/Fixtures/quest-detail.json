@@ -1,0 +1,276 @@
+{
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "version": "5c744a8d8daafb25",
+  "row_id": 69142,
+  "fields": {
+    "ClassJobLevel": [
+      76,
+      0
+    ],
+    "ClassJobRequired": {
+      "value": 0,
+      "sheet": "ClassJob",
+      "row_id": 0,
+      "fields": {
+        "Name": ""
+      }
+    },
+    "EventIconType": {
+      "value": 3,
+      "sheet": "EventIconType",
+      "row_id": 3,
+      "fields": {
+        "NpcIconAvailable": {
+          "id": 71200,
+          "path": "ui/icon/071000/071200.tex",
+          "path_hr1": "ui/icon/071000/071200_hr1.tex"
+        }
+      }
+    },
+    "ExpFactor": 400,
+    "Expansion": {
+      "value": 3,
+      "sheet": "ExVersion",
+      "row_id": 3,
+      "fields": {
+        "Name": "Shadowbringers"
+      }
+    },
+    "GilReward": 2493,
+    "Icon": {
+      "id": 100913,
+      "path": "ui/icon/100000/100913.tex",
+      "path_hr1": "ui/icon/100000/100913_hr1.tex"
+    },
+    "Id": "LucKmd101_03606",
+    "IssuerStart": {
+      "value": 1027231,
+      "sheet": "ENpcResident",
+      "row_id": 1027231,
+      "fields": {
+        "Singular": "manager of suites"
+      }
+    },
+    "ItemCountReward": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "JournalGenre": {
+      "value": 8,
+      "sheet": "JournalGenre",
+      "row_id": 8,
+      "fields": {
+        "Icon": {
+          "id": 61412,
+          "path": "ui/icon/061000/061412.tex",
+          "path_hr1": "ui/icon/061000/061412_hr1.tex"
+        },
+        "Name": "Shadowbringers"
+      }
+    },
+    "Name": "When It Rains",
+    "OptionalItemCountReward": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "OptionalItemIsHQReward": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ],
+    "OptionalItemReward": [
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      }
+    ],
+    "OtherReward": {
+      "value": 0,
+      "sheet": "QuestRewardOther",
+      "row_id": 0,
+      "fields": {
+        "Name": ""
+      }
+    },
+    "PlaceName": {
+      "value": 2951,
+      "sheet": "PlaceName",
+      "row_id": 2951,
+      "fields": {
+        "Name": "The Crystarium"
+      }
+    },
+    "QuestRewardOtherDisplay": {
+      "value": 0,
+      "sheet": "QuestRewardOther",
+      "row_id": 0,
+      "fields": {
+        "Name": ""
+      }
+    },
+    "Reward": [
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      },
+      {
+        "value": 0,
+        "sheet": "Item",
+        "row_id": 0,
+        "fields": {
+          "Icon": {
+            "id": 0,
+            "path": "ui/icon/000000/000000.tex",
+            "path_hr1": "ui/icon/000000/000000_hr1.tex"
+          },
+          "Name": ""
+        }
+      }
+    ]
+  }
+}

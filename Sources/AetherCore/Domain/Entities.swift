@@ -68,7 +68,8 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case .item: "Name,Icon,LevelItem@as(raw),LevelEquip,ItemUICategory.Name"
     case .recipe:
       "ItemResult.Name,ItemResult.Icon,CraftType.Name,RecipeLevelTable.ClassJobLevel,AmountResult"
-    case .quest: "Name,Icon,ClassJobLevel,Expansion.Name,JournalGenre.Name"
+    case .quest:
+      "Name,ClassJobLevel,Expansion.Name,JournalGenre.Name,JournalGenre.Icon,ClassJobRequired.Name,EventIconType.NpcIconAvailable"
     case .npc: "Singular,Title"
     case .action: "Name,Icon,ClassJobLevel,ClassJob.Name,ActionCategory.Name"
     }
@@ -81,7 +82,9 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case .recipe:
       summaryFields
         + ",Ingredient[].Name,Ingredient[].Icon,AmountIngredient,CanHq,RequiredCraftsmanship,RequiredControl,IsExpert"
-    case .quest: summaryFields + ",IssuerStart.Singular,PlaceName.Name"
+    case .quest:
+      summaryFields
+        + ",Icon,Id,IssuerStart.Singular,PlaceName.Name,ExpFactor,GilReward,Reward[].Name,Reward[].Icon,ItemCountReward,OptionalItemReward[].Name,OptionalItemReward[].Icon,OptionalItemCountReward,OptionalItemIsHQReward,OtherReward.Name,QuestRewardOtherDisplay.Name"
     case .npc: summaryFields
     case .action: summaryFields + ",Cast100ms,Recast100ms,Range"
     }
@@ -196,7 +199,7 @@ public struct SheetRow: Codable, Sendable {
       }
     return EntitySummary(
       id: EntityID(kind: kind, row: rowID), name: name, category: category,
-      iconPath: icon["id"].integer == 0 ? nil : icon["path_hr1"].string ?? icon["path"].string,
+      iconPath: kind == .quest ? QuestPresentation.thumbnailPath(for: self) : icon.iconPath,
       level: level)
   }
 }
@@ -263,15 +266,22 @@ public struct EntityDetail: Sendable {
   public let version: String?
   public let isStale: Bool
   public let description: GameDescription
+  public let questJournal: QuestJournal?
+  public let questExperience: Int?
+  public let questContentError: String?
 
   public init(
-    entity: EntitySummary, row: SheetRow, schema: String?, version: String?, isStale: Bool
+    entity: EntitySummary, row: SheetRow, schema: String?, version: String?, isStale: Bool,
+    questJournal: QuestJournal? = nil, questExperience: Int? = nil, questContentError: String? = nil
   ) {
     self.entity = entity
     self.row = row
     self.schema = schema
     self.version = version
     self.isStale = isStale
+    self.questJournal = questJournal
+    self.questExperience = questExperience
+    self.questContentError = questContentError
     let fields = entity.id.kind == .action ? (row.transient ?? [:]) : row.fields
     description = GameDescription(
       plainText: fields["Description"]?.string, html: fields["Description@as(html)"]?.string)

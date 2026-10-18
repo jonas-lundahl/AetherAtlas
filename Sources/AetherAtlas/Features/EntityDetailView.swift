@@ -85,26 +85,30 @@ struct EntityDetailView: View {
   private func content(_ detail: EntityDetail) -> some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 24) {
-        VStack(alignment: .leading, spacing: 18) {
-          HStack(spacing: 5) {
-            Text("DATABASE")
-            Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold))
-            Text(detail.entity.id.kind.title.uppercased())
-          }.font(.system(size: 10, weight: .semibold)).tracking(1.1).foregroundStyle(.secondary)
-          HStack(alignment: .top, spacing: 16) {
-            GameIcon(
-              path: detail.entity.iconPath, kind: detail.entity.id.kind, icons: workspace.icons,
-              size: 68)
-            VStack(alignment: .leading, spacing: 6) {
-              Text(detail.entity.displayName).font(
-                .system(size: 28, weight: .semibold, design: .serif)
-              ).textSelection(.enabled).accessibilityIdentifier("entityDetailName")
-              Text(
-                detail.entity.category.flatMap { $0.isEmpty ? nil : $0 }
-                  ?? detail.entity.id.kind.singular
-              ).font(.subheadline).foregroundStyle(.secondary)
+        if detail.entity.id.kind == .quest {
+          QuestJournalView(detail: detail, icons: workspace.icons, open: workspace.open)
+        } else {
+          VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 5) {
+              Text("DATABASE")
+              Image(systemName: "chevron.right").font(.system(size: 8, weight: .bold))
+              Text(detail.entity.id.kind.title.uppercased())
+            }.font(.system(size: 10, weight: .semibold)).tracking(1.1).foregroundStyle(.secondary)
+            HStack(alignment: .top, spacing: 16) {
+              GameIcon(
+                path: detail.entity.iconPath, kind: detail.entity.id.kind, icons: workspace.icons,
+                size: 68)
+              VStack(alignment: .leading, spacing: 6) {
+                Text(detail.entity.displayName).font(
+                  .system(size: 28, weight: .semibold, design: .serif)
+                ).textSelection(.enabled).accessibilityIdentifier("entityDetailName")
+                Text(
+                  detail.entity.category.flatMap { $0.isEmpty ? nil : $0 }
+                    ?? detail.entity.id.kind.singular
+                ).font(.subheadline).foregroundStyle(.secondary)
+              }
+              Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
           }
         }
         if detail.isStale {
@@ -137,8 +141,9 @@ struct EntityDetailView: View {
           "FINAL FANTASY XIV © SQUARE ENIX\nIndependent community tool · Data provided by XIVAPI"
         )
         .font(.system(size: 10)).foregroundStyle(.tertiary).padding(.top, 8)
-      }.padding(28).frame(maxWidth: 820, alignment: .leading).frame(
-        maxWidth: .infinity, alignment: .leading)
+      }.padding(.horizontal, 28).padding(.top, 12).padding(.bottom, 28)
+        .frame(maxWidth: 820, alignment: .leading).frame(
+          maxWidth: .infinity, alignment: .leading)
     }.accessibilityIdentifier("entityDetail").id(detail.entity.id)
   }
   @ViewBuilder private func itemSections(_ detail: EntityDetail) -> some View {
@@ -280,7 +285,14 @@ struct EntityDetailView: View {
   }
   @ViewBuilder private func questSections(_ detail: EntityDetail) -> some View {
     let row = detail.row
+    if let error = detail.questContentError {
+      Label(error, systemImage: "exclamationmark.triangle").font(.caption).foregroundStyle(
+        .secondary)
+    }
     DetailSection("Quest information") {
+      if let category = detail.entity.category, !category.isEmpty {
+        MetadataRow(label: "Category", value: category)
+      }
       if let level = detail.entity.level {
         MetadataRow(label: "Required level", value: String(level))
       }
