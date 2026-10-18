@@ -11,6 +11,95 @@ import XCTest
       "Expected \(text) in \(element)", file: file, line: line)
   }
 
+  private func assertSelectedResult(
+    _ id: String, name: String, in app: XCUIApplication,
+    file: StaticString = #filePath, line: UInt = #line
+  ) {
+    let results = app.descendants(matching: .any).matching(identifier: "entityResults").firstMatch
+    let row = results.outlineRows.containing(.any, identifier: "entity-\(id)").firstMatch
+    XCTAssertTrue(row.exists, results.debugDescription, file: file, line: line)
+    let selected = NSPredicate(format: "selected == true")
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [XCTNSPredicateExpectation(predicate: selected, object: row)], timeout: 3),
+      .completed, "Expected \(id) to be highlighted", file: file, line: line)
+    XCTAssertEqual(results.outlineRows.matching(selected).count, 1, file: file, line: line)
+    assertDisplayedText(name, in: app.staticTexts["entityDetailName"], file: file, line: line)
+  }
+
+  func testMouseClicksKeepHighlightAndDetailsTogether() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let potion = app.descendants(matching: .any)["entity-Item:1"]
+    let water = app.descendants(matching: .any)["entity-Item:3"]
+    XCTAssertTrue(potion.waitForExistence(timeout: 10))
+    XCTAssertTrue(water.waitForExistence(timeout: 5))
+    // Icon, title, subtitle, empty space, level, and the row's vertical padding.
+    for point in [
+      CGVector(dx: 0.04, dy: 0.5), CGVector(dx: 0.30, dy: 0.3),
+      CGVector(dx: 0.30, dy: 0.7), CGVector(dx: 0.76, dy: 0.5),
+      CGVector(dx: 0.96, dy: 0.5), CGVector(dx: 0.5, dy: 0.03),
+    ] {
+      potion.coordinate(withNormalizedOffset: point).click()
+      assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+      water.coordinate(withNormalizedOffset: point).click()
+      assertSelectedResult("Item:3", name: "Fixture Water", in: app)
+    }
+    app.typeKey(.upArrow, modifierFlags: [])
+    assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+    app.typeKey(.downArrow, modifierFlags: [])
+    assertSelectedResult("Item:3", name: "Fixture Water", in: app)
+    potion.click()
+    assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+    app.buttons["Open Fixture Potion, Recipe"].click()
+    XCTAssertTrue(app.buttons["Open Fixture Water, Item"].waitForExistence(timeout: 5))
+    // Clicking the selected row must reopen it after following a detail link.
+    potion.coordinate(withNormalizedOffset: CGVector(dx: 0.76, dy: 0.5)).click()
+    assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+  }
+
+  func testSavedResultSelectionFollowsClicksSortingAndHistoryReordering() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let potion = app.descendants(matching: .any)["entity-Item:1"]
+    let water = app.descendants(matching: .any)["entity-Item:3"]
+    XCTAssertTrue(water.waitForExistence(timeout: 10))
+    for (row, id, name) in [
+      (water, "Item:3", "Fixture Water"), (potion, "Item:1", "Fixture Potion"),
+    ] {
+      row.click()
+      assertSelectedResult(id, name: name, in: app)
+      app.typeKey("d", modifierFlags: .command)
+      XCTAssertTrue(app.buttons["Remove Favorite"].waitForExistence(timeout: 5))
+    }
+    app.descendants(matching: .any).matching(identifier: "sidebar-favorites").firstMatch.click()
+    XCTAssertTrue(app.staticTexts["2 saved locally"].waitForExistence(timeout: 5))
+    app.menuButtons["resultSort"].click()
+    app.menuItems["Name"].click()
+    water.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.3)).click()
+    assertSelectedResult("Item:3", name: "Fixture Water", in: app)
+    potion.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.7)).click()
+    assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+    water.rightClick()
+    app.menuItems["Open Details"].click()
+    assertSelectedResult("Item:3", name: "Fixture Water", in: app)
+    app.menuButtons["resultSort"].click()
+    app.menuItems["Original order"].click()
+    app.descendants(matching: .any).matching(identifier: "sidebar-history").firstMatch.click()
+    for _ in 0..<2 {
+      potion.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.3)).click()
+      assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+      water.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.3)).click()
+      assertSelectedResult("Item:3", name: "Fixture Water", in: app)
+    }
+  }
+
   func testQuestNumbersFollowAllFourObjectLanguages() {
     continueAfterFailure = false
     let app = XCUIApplication()

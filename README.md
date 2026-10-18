@@ -103,7 +103,7 @@ xcodebuild -project AetherAtlas.xcodeproj -scheme AetherAtlas-UI \
 swift test -Xswiftc -strict-concurrency=complete
 ```
 
-UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Number-formatting scenarios cover all four languages, a differing system locale, independent list/detail formatting, rewards, item values, crafting requirements, and decimal action timings. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
+UI tests exercise search, empty states, Escape, mouse selection across row contents and empty space, arrow-key navigation, reopening a selected result, selection in sorted favorites and reordering history, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Number-formatting scenarios cover all four languages, a differing system locale, independent list/detail formatting, rewards, item values, crafting requirements, and decimal action timings. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
 
 Format sources with Xcode’s bundled tool:
 

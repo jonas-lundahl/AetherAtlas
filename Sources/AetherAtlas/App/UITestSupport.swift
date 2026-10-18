@@ -36,6 +36,15 @@
         id: EntityID(kind: .item, row: 1), name: potionName(language), category: "Test medicine",
         level: 1234)
     }
+    private func entries(for kind: EntityKind, language: GameLanguage) -> [EntitySummary] {
+      guard kind == .item else { return [entry(for: kind, language: language)] }
+      return [
+        item(language),
+        EntitySummary(
+          id: EntityID(kind: .item, row: 3), name: waterName(language), category: "Test reagent",
+          level: 5),
+      ]
+    }
     private func recipe(_ language: GameLanguage) -> EntitySummary {
       EntitySummary(
         id: EntityID(kind: .recipe, row: 2), name: potionName(language), category: "Test alchemy",
@@ -73,12 +82,12 @@
       async throws -> EntityPage
     {
       EntityPage(
-        entries: text.localizedCaseInsensitiveContains("fixture")
-          || entry(for: kind, language: language).name.localizedCaseInsensitiveContains(text)
-          ? [entry(for: kind, language: language)] : [])
+        entries: entries(for: kind, language: language).filter {
+          $0.name.localizedCaseInsensitiveContains(text)
+        })
     }
     func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage {
-      EntityPage(entries: [entry(for: kind, language: language)])
+      EntityPage(entries: entries(for: kind, language: language))
     }
     func recipes(item: Int, cursor: String?, language: GameLanguage) async throws -> EntityPage {
       EntityPage(entries: item == 1 ? [recipe(language)] : [])

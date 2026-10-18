@@ -3,6 +3,7 @@ import SwiftUI
 struct BrowserView: View {
   @Bindable var workspace: Workspace
   @FocusState private var searchFocused: Bool
+  @FocusState private var resultsFocused: Bool
   @State private var savedSelection: EntityID?
   @State private var sort: ResultSort = .relevance
   var body: some View {
@@ -35,12 +36,6 @@ struct BrowserView: View {
     }
     .onChange(of: search.query) {
       if case .category = workspace.section {} else { workspace.section = .category(search.kind) }
-    }
-    .onChange(of: search.selection) { _, id in
-      if let entity = search.entries.first(where: { $0.id == id }) { workspace.open(entity) }
-    }
-    .onChange(of: savedSelection) { _, id in
-      if let entity = savedEntries.first(where: { $0.id == id }) { workspace.open(entity) }
     }
     .onExitCommand {
       if !search.query.isEmpty {
@@ -90,6 +85,7 @@ struct BrowserView: View {
           Image(systemName: "star")
         }.tag(BrowserSection.favorites).accessibilityIdentifier("sidebar-favorites")
         Label("Recently Viewed", systemImage: "clock").tag(BrowserSection.history)
+          .accessibilityIdentifier("sidebar-history")
       }
     }
     .listStyle(.sidebar)
@@ -113,6 +109,20 @@ struct BrowserView: View {
       ? workspace.library.snapshot.favorites : workspace.library.snapshot.history
   }
   private var isSaved: Bool { if case .category = workspace.section { false } else { true } }
+  private var resultSelection: Binding<EntityID?> {
+    Binding(
+      get: { isSaved ? savedSelection : workspace.search.selection },
+      set: { id in
+        if isSaved {
+          savedSelection = id
+        } else {
+          workspace.search.selection = id
+        }
+        if let entity = displayedEntries.first(where: { $0.id == id }) {
+          workspace.open(entity)
+        }
+      })
+  }
   private var displayedEntries: [EntitySummary] {
     let entries = isSaved ? savedEntries : workspace.search.entries
     switch sort {
@@ -145,6 +155,7 @@ struct BrowserView: View {
         } label: {
           Image(systemName: "arrow.up.arrow.down")
         }.menuStyle(.borderlessButton).fixedSize().help("Sort loaded results")
+          .accessibilityIdentifier("resultSort")
       }.padding(16)
       Divider()
       if !isSaved && workspace.search.isStale {
@@ -178,21 +189,24 @@ struct BrowserView: View {
           }
         }
       } else {
-        List(
-          selection: isSaved
-            ? $savedSelection
-            : Binding(get: { workspace.search.selection }, set: { workspace.search.selection = $0 })
-        ) {
+        List(selection: resultSelection) {
           ForEach(displayedEntries) { entity in
             ResultRow(
               entity: entity, language: workspace.language, icons: workspace.icons,
               favorite: workspace.library.isFavorite(entity.id)
             )
+            .contentShape(Rectangle())
             .tag(entity.id)
             .accessibilityIdentifier("entity-\(entity.id.description)")
-            .simultaneousGesture(TapGesture().onEnded { workspace.open(entity) })
+            // A row gesture can open details without triggering native List selection.
+            .simultaneousGesture(
+              TapGesture().onEnded {
+                resultsFocused = true
+                resultSelection.wrappedValue = entity.id
+              }
+            )
             .contextMenu {
-              Button("Open Details") { workspace.open(entity) }
+              Button("Open Details") { resultSelection.wrappedValue = entity.id }
               Button(
                 workspace.library.isFavorite(entity.id) ? "Remove Favorite" : "Add Favorite",
                 systemImage: "star"
@@ -204,8 +218,9 @@ struct BrowserView: View {
             }
           }
         }.listStyle(.inset).accessibilityIdentifier("entityResults")
+          .focused($resultsFocused)
           .onKeyPress(.return) {
-            let id = isSaved ? savedSelection : workspace.search.selection
+            let id = resultSelection.wrappedValue
             guard let entity = displayedEntries.first(where: { $0.id == id }) else {
               return .ignored
             }

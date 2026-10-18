@@ -126,3 +126,16 @@ Result levels, loaded/saved counts, and the sidebar favorites count use the glob
 - **Formatting and project:** strict Swift formatting and `git diff --check` passed. The regenerated Xcode project registers the new formatting tests and preserves existing shared scheme settings. Debug fixtures remain isolated from live services and the real saved library.
 
 Verified on macOS 26.6.2 / Apple Silicon using Xcode 27.1 and Swift 6.4. No Release archive was produced. Exact macOS 26.0, Intel runtime behavior, a live light-appearance inspection, and a full spoken VoiceOver audit remain unverified.
+
+## Mouse row selection — 18 October 2026
+
+The supplied recording showed quest details advancing while the highlight remained on an earlier row. The result-row tap gesture opened an entity independently of the native List selection. Result selection now uses one binding that updates the selected identity and opens its entity for both native selection and row taps. A rectangular hit area includes the row's empty space and padding; a tap also focuses the results list so arrow-key navigation continues immediately. Clicking an already selected result still reopens it after following a related link. Context-menu Open Details uses the same selection binding.
+
+The Debug-only UI repository now provides two item rows. New native UI tests assert exactly one selected accessibility row and matching details after clicks on icons, titles, subtitles, empty space, levels, and vertical padding. They also cover switching to arrow keys, reopening a selected result, sorted favorites, context-menu opening, and repeated history selections as recently viewed entries move to the front. Fixtures continue to use isolated preferences, library storage, and icon transport without live service requests.
+
+- **Regression reproduction:** the mouse regression failed against the original browser implementation because the clicked row did not become selected.
+- **Native UI:** both focused regressions passed, followed by all **11 tests passing** in the complete suite against the final implementation. Result: `build/Logs/Test/Test-AetherAtlas-UI-2026.10.18_11-40-20-+0200.xcresult`. The run also covers search/Escape, language persistence and overrides, number formatting, quest layouts, related navigation, persistent favorites, formatted descriptions, and update checking.
+- **Live inspection:** opened the rebuilt Debug app with real quest data and checked Leves of the Observatorium, Leves of Whitebrim, and Leves of Saint Coinach's Find from the supplied recording. Native accessibility and screenshots confirmed the selected row and displayed quest agree. The rebuilt app was left open on Leves of Saint Coinach's Find in dark appearance.
+- **Formatting:** strict Swift formatting and `git diff --check` passed for the changed sources. No source files were added or moved, so project regeneration was unnecessary.
+
+Verified on macOS 26.6.2 / Apple Silicon with Xcode 27.1 and Swift 6.4. The core implementation is unchanged; core/SwiftPM suites were not rerun. No Release archive or published release was produced. Exact macOS 26.0, Intel runtime behavior, light appearance, and a full spoken VoiceOver audit were not checked during this pass.
