@@ -7,6 +7,7 @@ A native macOS encyclopedia for Final Fantasy XIV, powered by **XIVAPI v2**. Ope
 - Native three-pane SwiftUI window with resizable sidebar, results, and details; system light/dark appearance.
 - Name search scoped by sidebar category: **Items, Recipes, Quests, NPCs, Actions**. The search field is always accessible; switch categories to apply the same name to another sheet.
 - Flag button groups select **English (🇬🇧), Deutsch (🇩🇪), Français (🇫🇷), or 日本語 (🇯🇵)**; hover a flag to see its language name. **Default game language**, at the bottom of the sidebar, sets the language for searches and newly opened objects and is remembered across launches. **Object language**, above the details, changes only the current entity and its related recipes. Both groups contain exactly four flags. Object choices last for the session and follow their entity through back/forward navigation. App controls remain in English.
+- Number formatting follows the selected game language: English/Japanese **1,234.5**, German **1.234,5**, French **1 234,5**. Results, saved-list counts, and favorites counts use the default language; object details and related recipes use the object's language. This covers levels, stats, prices, stacks, quantities, rewards, and action timings, which retain one decimal place. Source IDs, version strings, and numbers within game-provided descriptions retain their original form.
 - 300 ms debounce, cancellation, response-order guards, relevance order, and cursor pagination. Empty search browses the selected sheet in row order. Sort the **loaded** results by name or level.
 - Item descriptions, icons, item/equip levels, equipment slots, class/job restrictions, attributes, damage/defense, inventory flags, materia slots, stack size, and reference vendor values when supplied.
 - Native selectable action/item descriptions retain XIVAPI’s colors, emphasis, and line breaks. Game highlight colors are preserved in dark appearance and adjusted for contrast on light surfaces; plain descriptions remain available as a fallback.
@@ -102,7 +103,7 @@ xcodebuild -project AetherAtlas.xcodeproj -scheme AetherAtlas-UI \
 swift test -Xswiftc -strict-concurrency=complete
 ```
 
-UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
+UI tests exercise search, empty states, Escape, selection, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Number-formatting scenarios cover all four languages, a differing system locale, independent list/detail formatting, rewards, item values, crafting requirements, and decimal action timings. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
 
 Format sources with Xcode’s bundled tool:
 

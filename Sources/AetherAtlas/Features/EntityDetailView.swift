@@ -4,6 +4,7 @@ struct EntityDetailView: View {
   @Bindable var workspace: Workspace
   @State private var refresh = 0
   private var model: DetailModel { workspace.detail }
+  private var language: GameLanguage { workspace.objectLanguage }
   var body: some View {
     Group {
       if let current = workspace.navigation.current {
@@ -86,7 +87,8 @@ struct EntityDetailView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 24) {
         if detail.entity.id.kind == .quest {
-          QuestJournalView(detail: detail, icons: workspace.icons, open: workspace.open)
+          QuestJournalView(
+            detail: detail, language: language, icons: workspace.icons, open: workspace.open)
         } else {
           VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 5) {
@@ -149,9 +151,10 @@ struct EntityDetailView: View {
   @ViewBuilder private func itemSections(_ detail: EntityDetail) -> some View {
     let row = detail.row
     HStack(spacing: 0) {
-      Metric(label: "ITEM LEVEL", value: detail.entity.level.map(String.init) ?? "—")
-      Metric(label: "REQUIRED LEVEL", value: row["LevelEquip"].integer.map(String.init) ?? "—")
-      Metric(label: "STACK SIZE", value: row["StackSize"].integer?.formatted() ?? "—")
+      Metric(label: "ITEM LEVEL", value: detail.entity.level.map(language.formatNumber) ?? "—")
+      Metric(
+        label: "REQUIRED LEVEL", value: row["LevelEquip"].integer.map(language.formatNumber) ?? "—")
+      Metric(label: "STACK SIZE", value: row["StackSize"].integer.map(language.formatNumber) ?? "—")
     }.padding(.vertical, 15).background(
       .quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 8))
     if !detail.description.isEmpty {
@@ -175,7 +178,7 @@ struct EntityDetailView: View {
       }
       if row["IsUnique"].boolean == true { MetadataRow(label: "Unique", value: "Yes") }
       if let slots = row["MateriaSlotCount"].integer, slots > 0 {
-        MetadataRow(label: "Materia slots", value: String(slots))
+        MetadataRow(label: "Materia slots", value: language.formatNumber(slots))
       }
     }
     let stats = itemStats(row)
@@ -186,10 +189,10 @@ struct EntityDetailView: View {
     }
     DetailSection("Vendor values") {
       if let value = row["PriceMid"].integer {
-        MetadataRow(label: "Base purchase value", value: "\(value.formatted()) gil")
+        MetadataRow(label: "Base purchase value", value: "\(language.formatNumber(value)) gil")
       }
       if let value = row["PriceLow"].integer {
-        MetadataRow(label: "Base sale value", value: "\(value.formatted()) gil")
+        MetadataRow(label: "Base sale value", value: "\(language.formatNumber(value)) gil")
       }
       Text(
         "Reference values from the item sheet. Individual shops and availability are not listed."
@@ -198,7 +201,7 @@ struct EntityDetailView: View {
     DetailSection("Crafting recipes") {
       if model.recipesLoading && model.recipes.isEmpty { ProgressView().controlSize(.small) }
       ForEach(model.recipes) { recipe in
-        entityLink(recipe, trailing: recipe.level.map { "Lv. \($0)" })
+        entityLink(recipe, trailing: recipe.level.map { "Lv. \(language.formatNumber($0))" })
       }
       if let error = model.recipesError {
         Text(error).font(.caption).foregroundStyle(.secondary)
@@ -229,10 +232,10 @@ struct EntityDetailView: View {
         MetadataRow(label: "Discipline", value: craft)
       }
       if let level = detail.entity.level {
-        MetadataRow(label: "Crafter level", value: String(level))
+        MetadataRow(label: "Crafter level", value: language.formatNumber(level))
       }
       if let amount = row["AmountResult"].integer {
-        MetadataRow(label: "Yield", value: String(amount))
+        MetadataRow(label: "Yield", value: language.formatNumber(amount))
       }
       if let value = row["CanHq"].boolean {
         MetadataRow(label: "High quality", value: value ? "Available" : "Unavailable")
@@ -243,7 +246,8 @@ struct EntityDetailView: View {
     }
     if let output = linkedEntity(row["ItemResult"]) {
       DetailSection("Produces") {
-        entityLink(output, trailing: row["AmountResult"].integer.map { "×\($0)" })
+        entityLink(
+          output, trailing: row["AmountResult"].integer.map { "×\(language.formatNumber($0))" })
       }
     }
     DetailSection("Ingredients & crystals") {
@@ -253,7 +257,7 @@ struct EntityDetailView: View {
         if let entity = linkedEntity(ingredient), amounts.indices.contains(index),
           let count = amounts[index].integer, count > 0
         {
-          entityLink(entity, trailing: "×\(count)")
+          entityLink(entity, trailing: "×\(language.formatNumber(count))")
         }
       }
     }
@@ -268,18 +272,23 @@ struct EntityDetailView: View {
         MetadataRow(label: "Class / job", value: job.capitalized)
       }
       if let level = detail.entity.level {
-        MetadataRow(label: "Required level", value: String(level))
+        MetadataRow(label: "Required level", value: language.formatNumber(level))
       }
       if let cast = row["Cast100ms"].integer {
         MetadataRow(
           label: "Cast time",
-          value: cast == 0 ? "Instant" : String(format: "%.1f s", Double(cast) / 10))
+          value: cast == 0
+            ? "Instant" : "\(language.formatNumber(Double(cast) / 10, fractionDigits: 1)) s")
       }
       if let recast = row["Recast100ms"].integer {
-        MetadataRow(label: "Recast time", value: String(format: "%.1f s", Double(recast) / 10))
+        MetadataRow(
+          label: "Recast time",
+          value: "\(language.formatNumber(Double(recast) / 10, fractionDigits: 1)) s")
       }
       if let range = row["Range"].integer {
-        MetadataRow(label: "Range", value: range < 0 ? "Varies by weapon" : "\(range) yalms")
+        MetadataRow(
+          label: "Range",
+          value: range < 0 ? "Varies by weapon" : "\(language.formatNumber(range)) yalms")
       }
     }
   }
@@ -294,7 +303,7 @@ struct EntityDetailView: View {
         MetadataRow(label: "Category", value: category)
       }
       if let level = detail.entity.level {
-        MetadataRow(label: "Required level", value: String(level))
+        MetadataRow(label: "Required level", value: language.formatNumber(level))
       }
       if let expansion = row["Expansion"].referenceName {
         MetadataRow(label: "Expansion", value: expansion)
@@ -340,7 +349,7 @@ struct EntityDetailView: View {
   @ViewBuilder private func forPositive(_ row: SheetRow, field: String, label: String) -> some View
   {
     if let value = row[field].integer, value > 0 {
-      MetadataRow(label: label, value: value.formatted())
+      MetadataRow(label: label, value: language.formatNumber(value))
     }
   }
   private func linkedEntity(_ value: FieldValue) -> EntitySummary? {
@@ -367,14 +376,14 @@ struct EntityDetailView: View {
       ("DamagePhys", "Physical damage"), ("DamageMag", "Magic damage"), ("DefensePhys", "Defense"),
       ("DefenseMag", "Magic defense"),
     ] {
-      if let n = row[key].integer, n > 0 { values.append((name, n.formatted())) }
+      if let n = row[key].integer, n > 0 { values.append((name, language.formatNumber(n))) }
     }
     let amounts = row["BaseParamValue"].array
     for (index, param) in row["BaseParam"].array.enumerated() {
       if let name = param.referenceName, !name.isEmpty, amounts.indices.contains(index),
         let n = amounts[index].integer, n != 0
       {
-        values.append((name, n.formatted()))
+        values.append((name, language.formatNumber(n)))
       }
     }
     return values
@@ -409,6 +418,7 @@ struct MetadataRow: View {
       Spacer(minLength: 0)
       Text(value).multilineTextAlignment(.trailing).textSelection(.enabled)
     }.font(.callout).accessibilityElement(children: .combine)
+      .accessibilityIdentifier("metadata-\(label)")
   }
 }
 private struct Metric: View {
@@ -420,6 +430,8 @@ private struct Metric: View {
         .secondary)
       Text(value).font(.title2.weight(.medium).monospacedDigit())
     }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).accessibilityElement(
-      children: .combine)
+      children: .combine
+    )
+    .accessibilityIdentifier("metric-\(label)")
   }
 }

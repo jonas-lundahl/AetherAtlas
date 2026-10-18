@@ -82,8 +82,9 @@ struct BrowserView: View {
           HStack {
             Text("Favorites")
             Spacer()
-            Text(workspace.library.snapshot.favorites.count, format: .number).foregroundStyle(
-              .tertiary)
+            Text(workspace.language.formatNumber(workspace.library.snapshot.favorites.count))
+              .foregroundStyle(
+                .tertiary)
           }
         } icon: {
           Image(systemName: "star")
@@ -130,7 +131,7 @@ struct BrowserView: View {
           Text(workspace.section.title).font(.title2.weight(.semibold))
           Text(
             isSaved
-              ? "\(savedEntries.count) saved locally"
+              ? "\(workspace.language.formatNumber(savedEntries.count)) saved locally"
               : workspace.search.query.isEmpty
                 ? "Browse the game database" : "Results for “\(workspace.search.query)”"
           )
@@ -184,7 +185,7 @@ struct BrowserView: View {
         ) {
           ForEach(displayedEntries) { entity in
             ResultRow(
-              entity: entity, icons: workspace.icons,
+              entity: entity, language: workspace.language, icons: workspace.icons,
               favorite: workspace.library.isFavorite(entity.id)
             )
             .tag(entity.id)
@@ -220,7 +221,9 @@ struct BrowserView: View {
       }
       Divider()
       HStack {
-        Text("\(displayedEntries.count) \(isSaved ? "entities" : "loaded")").font(.caption)
+        Text(
+          "\(workspace.language.formatNumber(displayedEntries.count)) \(isSaved ? "entities" : "loaded")"
+        ).font(.caption)
           .foregroundStyle(.secondary)
         Spacer()
         if workspace.section == .history {
@@ -244,6 +247,7 @@ private enum ResultSort: String, CaseIterable, Identifiable {
 
 struct ResultRow: View {
   let entity: EntitySummary
+  let language: GameLanguage
   let icons: IconStore
   var favorite = false
   var body: some View {
@@ -258,7 +262,10 @@ struct ResultRow: View {
       Spacer(minLength: 4)
       VStack(alignment: .trailing, spacing: 5) {
         if let level = entity.level, level > 0 {
-          Text(entity.id.kind == .item ? "i\(level)" : "Lv. \(level)").font(
+          Text(
+            entity.id.kind == .item
+              ? "i\(language.formatNumber(level))" : "Lv. \(language.formatNumber(level))"
+          ).font(
             .caption.monospacedDigit()
           ).foregroundStyle(.secondary)
         }

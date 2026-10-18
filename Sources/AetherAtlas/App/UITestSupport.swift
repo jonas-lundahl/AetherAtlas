@@ -34,7 +34,7 @@
     private func item(_ language: GameLanguage) -> EntitySummary {
       EntitySummary(
         id: EntityID(kind: .item, row: 1), name: potionName(language), category: "Test medicine",
-        level: 10)
+        level: 1234)
     }
     private func recipe(_ language: GameLanguage) -> EntitySummary {
       EntitySummary(
@@ -54,7 +54,7 @@
           "Expansion": .object(["fields": .object(["Name": .string("A Realm Reborn")])]),
           "PlaceName": .object(["fields": .object(["Name": .string("Gridania")])]),
           "Reward": .array([reference(row: 1, name: "Fixture Potion")]),
-          "ItemCountReward": .array([.number(2)]),
+          "ItemCountReward": .array([.number(1250)]),
           "IssuerStart": .object([
             "sheet": .string("ENpcResident"), "row_id": .number(5),
             "fields": .object(["Singular": .string("Fixture Guildmaster")]),
@@ -108,7 +108,11 @@
         return EntityDetail(
           entity: action,
           row: SheetRow(
-            rowID: id.row, fields: ["Name": .string("Fixture Sprint")],
+            rowID: id.row,
+            fields: [
+              "Name": .string("Fixture Sprint"), "Cast100ms": .number(25),
+              "Recast100ms": .number(600), "Range": .number(25),
+            ],
             transient: [
               "Description": .string("Increases movement speed.\nAdditional Effect: Grants Jog."),
               "Description@as(html)": .string(
@@ -121,13 +125,15 @@
         fields = [
           "ItemResult": reference(row: 1, name: potionName(language)),
           "Ingredient": .array([reference(row: 3, name: waterName(language))]),
-          "AmountIngredient": .array([.number(2)]), "AmountResult": .number(1),
+          "AmountIngredient": .array([.number(1250)]), "AmountResult": .number(1000),
+          "RequiredCraftsmanship": .number(1234), "RequiredControl": .number(2345),
         ]
       } else {
         fields = [
           "Name": .string(id.row == 1 ? potionName(language) : waterName(language)),
           "Description": .string("Deterministic UI test description."), "LevelEquip": .number(1),
-          "StackSize": .number(99),
+          "StackSize": .number(9999), "PriceMid": .number(1_234_567),
+          "PriceLow": .number(1234), "DamagePhys": .number(1234),
         ]
       }
       return EntityDetail(

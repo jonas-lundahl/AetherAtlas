@@ -24,6 +24,23 @@ public enum GameLanguage: String, Codable, CaseIterable, Sendable, Identifiable 
     case .japanese: "日本語"
     }
   }
+  public var locale: Locale {
+    switch self {
+    case .english: Locale(identifier: "en_GB")
+    case .german: Locale(identifier: "de_DE")
+    case .french: Locale(identifier: "fr_FR")
+    case .japanese: Locale(identifier: "ja_JP")
+    }
+  }
+
+  /// Presentation follows the game language, independently of the system locale.
+  public func formatNumber(_ value: Int) -> String {
+    value.formatted(.number.locale(locale))
+  }
+
+  public func formatNumber(_ value: Double, fractionDigits: Int) -> String {
+    value.formatted(.number.precision(.fractionLength(fractionDigits)).locale(locale))
+  }
 }
 
 public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {

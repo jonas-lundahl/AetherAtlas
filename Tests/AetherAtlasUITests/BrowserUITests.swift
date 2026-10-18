@@ -1,6 +1,115 @@
 import XCTest
 
 @MainActor final class BrowserUITests: XCTestCase {
+  private func assertDisplayedText(
+    _ text: String, in element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
+  ) {
+    let predicate = NSPredicate(format: "label CONTAINS %@ OR value CONTAINS %@", text, text)
+    let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+    XCTAssertEqual(
+      XCTWaiter.wait(for: [expectation], timeout: 5), .completed,
+      "Expected \(text) in \(element)", file: file, line: line)
+  }
+
+  func testQuestNumbersFollowAllFourObjectLanguages() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launchArguments = ["-AppleLocale", "sv_SE"]
+    app.launch()
+    let quests = app.descendants(matching: .any).matching(identifier: "category-Quest").firstMatch
+    XCTAssertTrue(quests.waitForExistence(timeout: 10))
+    quests.click()
+    let quest = app.descendants(matching: .any)["entity-Quest:4"]
+    XCTAssertTrue(quest.waitForExistence(timeout: 5))
+    quest.click()
+    let picker = app.descendants(matching: .any).matching(identifier: "objectLanguagePicker")
+      .firstMatch
+    XCTAssertTrue(picker.waitForExistence(timeout: 5))
+    for (flag, experience, gil) in [
+      ("🇬🇧", "224,640", "2,493"), ("🇩🇪", "224.640", "2.493"),
+      ("🇫🇷", "224\u{202F}640", "2\u{202F}493"), ("🇯🇵", "224,640", "2,493"),
+    ] {
+      picker.radioButtons[flag].click()
+      assertDisplayedText(
+        experience,
+        in: app.descendants(matching: .any).matching(identifier: "questReward-EXP").firstMatch)
+      assertDisplayedText(
+        gil, in: app.descendants(matching: .any).matching(identifier: "questReward-Gil").firstMatch)
+    }
+  }
+
+  func testNumberFormattingSeparatesGlobalListsFromObjectDetails() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launchArguments = ["-AppleLocale", "sv_SE"]
+    app.launch()
+    let globalPicker = app.descendants(matching: .any).matching(identifier: "gameLanguagePicker")
+      .firstMatch
+    XCTAssertTrue(globalPicker.waitForExistence(timeout: 10))
+    globalPicker.radioButtons["🇩🇪"].click()
+    let row = app.descendants(matching: .any)["entity-Item:1"]
+    XCTAssertTrue(row.waitForExistence(timeout: 5))
+    assertDisplayedText("i1.234", in: row)
+    row.click()
+    let objectPicker = app.descendants(matching: .any).matching(identifier: "objectLanguagePicker")
+      .firstMatch
+    XCTAssertTrue(objectPicker.waitForExistence(timeout: 5))
+    assertDisplayedText(
+      "9.999",
+      in: app.descendants(matching: .any).matching(identifier: "metric-STACK SIZE").firstMatch)
+    assertDisplayedText(
+      "1.234.567 gil",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Base purchase value")
+        .firstMatch)
+    objectPicker.radioButtons["🇫🇷"].click()
+    assertDisplayedText(
+      "9\u{202F}999",
+      in: app.descendants(matching: .any).matching(identifier: "metric-STACK SIZE").firstMatch)
+    assertDisplayedText(
+      "1\u{202F}234\u{202F}567 gil",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Base purchase value")
+        .firstMatch)
+    assertDisplayedText("i1.234", in: row)
+    objectPicker.radioButtons["🇯🇵"].click()
+    globalPicker.radioButtons["🇫🇷"].click()
+    assertDisplayedText("i1\u{202F}234", in: row)
+    assertDisplayedText(
+      "9,999",
+      in: app.descendants(matching: .any).matching(identifier: "metric-STACK SIZE").firstMatch)
+    let recipe = app.buttons["Open フィクスチャ・ポーション, Recipe"]
+    XCTAssertTrue(recipe.waitForExistence(timeout: 5))
+    recipe.click()
+    assertDisplayedText(
+      "1\u{202F}000",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Yield").firstMatch)
+    assertDisplayedText(
+      "1\u{202F}234",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Craftsmanship required")
+        .firstMatch)
+    let actions = app.descendants(matching: .any).matching(identifier: "category-Action").firstMatch
+    actions.click()
+    let action = app.descendants(matching: .any)["entity-Action:3"]
+    XCTAssertTrue(action.waitForExistence(timeout: 5))
+    action.click()
+    assertDisplayedText(
+      "2,5 s",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Cast time").firstMatch)
+    assertDisplayedText(
+      "60,0 s",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Recast time").firstMatch)
+    objectPicker.radioButtons["🇬🇧"].click()
+    assertDisplayedText(
+      "2.5 s",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Cast time").firstMatch)
+    assertDisplayedText(
+      "60.0 s",
+      in: app.descendants(matching: .any).matching(identifier: "metadata-Recast time").firstMatch)
+  }
+
   func testQuestJournalReadingOrderAndRewardNavigation() {
     continueAfterFailure = false
     let app = XCUIApplication()

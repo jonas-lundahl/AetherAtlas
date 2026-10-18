@@ -5,6 +5,7 @@ import SwiftUI
 /// same reading order as the game. Supplemental database metadata lives below it.
 struct QuestJournalView: View {
   let detail: EntityDetail
+  let language: GameLanguage
   let icons: IconStore
   let open: (EntitySummary) -> Void
   @Environment(\.colorScheme) private var colorScheme
@@ -21,14 +22,15 @@ struct QuestJournalView: View {
   var body: some View {
     VStack(spacing: 0) {
       HStack(alignment: .center, spacing: 16) {
-        Text("Lv. \(detail.entity.level.map(String.init) ?? "—")")
+        Text("Lv. \(detail.entity.level.map(language.formatNumber) ?? "—")")
           .font(.title2.weight(.medium).monospacedDigit())
           .lineLimit(1)
           .fixedSize(horizontal: true, vertical: false)
           .frame(width: 44, height: 44)
           .background(.primary.opacity(0.07), in: Circle())
           .accessibilityElement(children: .combine)
-          .accessibilityLabel("Level \(detail.entity.level.map(String.init) ?? "unknown")")
+          .accessibilityLabel(
+            "Level \(detail.entity.level.map(language.formatNumber) ?? "unknown")")
         Text(detail.entity.displayName)
           .font(.system(size: 26, weight: .medium, design: .serif))
           .multilineTextAlignment(.center)
@@ -61,8 +63,10 @@ struct QuestJournalView: View {
               ForEach(Array(journal.objectives.enumerated()), id: \.offset) { index, objective in
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
                   if journal.objectives.count > 1 {
-                    Text("\(index + 1).").monospacedDigit().foregroundStyle(.secondary)
-                      .frame(minWidth: 18, alignment: .trailing)
+                    Text("\(language.formatNumber(index + 1)).").monospacedDigit().foregroundStyle(
+                      .secondary
+                    )
+                    .frame(minWidth: 18, alignment: .trailing)
                   }
                   GameDescriptionText(description: objective)
                 }
@@ -132,9 +136,9 @@ struct QuestJournalView: View {
 
   @ViewBuilder private var rewardAmounts: some View {
     rewardAmount(
-      "EXP", value: detail.questExperience?.formatted() ?? "—", icon: 65_001)
+      "EXP", value: detail.questExperience.map(language.formatNumber) ?? "—", icon: 65_001)
     rewardAmount(
-      "Gil", value: detail.row["GilReward"].integer?.formatted() ?? "—", icon: 65_002)
+      "Gil", value: detail.row["GilReward"].integer.map(language.formatNumber) ?? "—", icon: 65_002)
   }
 
   private func rewardAmount(_ label: String, value: String, icon: Int) -> some View {
@@ -147,6 +151,7 @@ struct QuestJournalView: View {
         Text(value).font(.title2.weight(.medium).monospacedDigit()).textSelection(.enabled)
       }
     }.accessibilityElement(children: .combine)
+      .accessibilityIdentifier("questReward-\(label)")
   }
 
   @ViewBuilder private func rewardItems(_ field: String, counts: String, optional: Bool = false)
@@ -177,7 +182,7 @@ struct QuestJournalView: View {
               Text("HQ").font(.caption.weight(.medium)).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
-            Text("×\(count)").monospacedDigit()
+            Text("×\(language.formatNumber(count))").monospacedDigit()
             Image(systemName: "chevron.right").font(.caption).foregroundStyle(.secondary)
           }.contentShape(Rectangle())
         }
