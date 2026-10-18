@@ -1,19 +1,48 @@
 import Foundation
 
 public protocol GameRepository: Sendable {
-  func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage) async throws
+  func search(
+    kind: EntityKind, text: String, cursor: String?, language: GameLanguage, sort: ResultSort
+  ) async throws
     -> EntityPage
-  func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage
+  func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort) async throws
+    -> EntityPage
   func detail(_ id: EntityID, refresh: Bool, language: GameLanguage) async throws -> EntityDetail
   func recipes(item: Int, cursor: String?, language: GameLanguage) async throws -> EntityPage
 }
 
+extension GameRepository {
+  public func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage)
+    async throws -> EntityPage
+  {
+    try await search(kind: kind, text: text, cursor: cursor, language: language, sort: .original)
+  }
+  public func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws
+    -> EntityPage
+  {
+    try await browse(kind: kind, after: after, language: language, sort: .original)
+  }
+}
+
 public struct LiveGameRepository: GameRepository {
   public let cache: ResponseCache
-  public init(cache: ResponseCache) { self.cache = cache }
+  private let index: GameDataIndex?
+  private let queries: GameIndexQueries
+  public init(cache: ResponseCache, index: GameDataIndex? = nil) {
+    self.cache = cache
+    self.index = index
+    queries = GameIndexQueries(index: index)
+  }
+  private var gameData: GameDataIndex {
+    get throws { try index ?? GameDataIndex.bundled.get() }
+  }
+  private func pinned(_ request: APIRequest) throws -> APIRequest {
+    request.pinned(to: try gameData.snapshot)
+  }
   private func decoded<T: Decodable & Sendable>(
     _ type: T.Type, request: APIRequest, ttl: TimeInterval = 3_600, refresh: Bool = false
   ) async throws -> (T, Bool) {
+    let request = try pinned(request)
     let resource = try await cache.resource(request, ttl: ttl, refresh: refresh)
     do { return (try XIVAPIClient.decode(type, from: resource.data), resource.isStale) } catch {
       try? await cache.invalidate(request)
@@ -21,34 +50,65 @@ public struct LiveGameRepository: GameRepository {
     }
   }
   public func search(
-    kind: EntityKind, text: String, cursor: String? = nil, language: GameLanguage = .english
-  ) async throws
-    -> EntityPage
-  {
-    let envelope: SearchEnvelope
-    let stale: Bool
-    do {
-      (envelope, stale) = try await decoded(
-        SearchEnvelope.self,
-        request: .search(kind: kind, text: text, cursor: cursor, language: language),
-        ttl: cursor == nil ? 300 : 30)
-    } catch {
-      if cursor != nil, case APIError.http(400, _, _) = error {
-        try? await cache.invalidate(.search(kind: kind, text: text, language: language))
+    kind: EntityKind, text: String, cursor: String? = nil, language: GameLanguage = .english,
+    sort: ResultSort = .original
+  ) async throws -> EntityPage {
+    var before: Int?
+    if let cursor {
+      guard cursor.hasPrefix("index:"), let row = Int(cursor.dropFirst(6)), row >= 0 else {
+        throw APIError.invalidResponse
       }
-      throw error
+      before = row
+    }
+    let page = try await indexedPage(
+      kind: kind, text: text, before: before, language: language, sort: sort)
+    return EntityPage(
+      entries: page.entries, next: page.after.map { "index:\($0)" }, isStale: page.isStale)
+  }
+
+  public func browse(
+    kind: EntityKind, after: Int? = nil, language: GameLanguage = .english,
+    sort: ResultSort = .original
+  ) async throws -> EntityPage {
+    try await indexedPage(kind: kind, text: "", before: after, language: language, sort: sort)
+  }
+
+  private func indexedPage(
+    kind: EntityKind, text: String, before: Int?, language: GameLanguage, sort: ResultSort
+  ) async throws -> EntityPage {
+    let ids = try await queries.ids(kind: kind, language: language, sort: sort, text: text)
+    var offset = 0
+    if let before {
+      if let previous = ids.firstIndex(of: before) {
+        offset = previous + 1
+      } else if sort == .original {
+        offset = ids.firstIndex { $0 < before } ?? ids.count
+      } else {
+        throw APIError.invalidResponse
+      }
+    }
+    var entries: [EntitySummary] = []
+    var stale = false
+    while offset < ids.count && entries.count < 50 {
+      try Task.checkCancellation()
+      let batch = Array(ids[offset..<min(ids.count, offset + 50 - entries.count)])
+      let (envelope, cached) = try await decoded(
+        BrowseEnvelope.self, request: .rows(kind: kind, ids: batch, language: language))
+      let expected = Set(batch)
+      var rows: [Int: SheetRow] = [:]
+      for row in envelope.rows {
+        guard expected.contains(row.rowID), rows.updateValue(row, forKey: row.rowID) == nil else {
+          throw APIError.invalidResponse
+        }
+      }
+      entries += batch.compactMap { rows[$0]?.summary(kind: kind) }.filter {
+        !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+      }
+      stale = stale || cached
+      offset += batch.count
     }
     return EntityPage(
-      entries: envelope.results.map { $0.summary(kind: kind) }, next: envelope.next, isStale: stale)
-  }
-  public func browse(kind: EntityKind, after: Int? = nil, language: GameLanguage = .english)
-    async throws -> EntityPage
-  {
-    let (envelope, stale) = try await decoded(
-      BrowseEnvelope.self, request: .browse(kind: kind, after: after, language: language))
-    return EntityPage(
-      entries: envelope.rows.map { $0.summary(kind: kind) }.filter { !$0.name.isEmpty },
-      after: envelope.rows.count == 50 ? envelope.rows.last?.rowID : nil, isStale: stale)
+      entries: entries, after: offset < ids.count ? ids[offset - 1] : nil, isStale: stale)
   }
   public func detail(_ id: EntityID, refresh: Bool = false, language: GameLanguage = .english)
     async throws -> EntityDetail

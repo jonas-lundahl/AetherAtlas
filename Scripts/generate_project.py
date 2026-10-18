@@ -2,6 +2,7 @@
 """Deterministic, dependency-free Xcode project generation; rerun after adding source files."""
 from pathlib import Path
 import hashlib, json
+import xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parent.parent
 objects = {}
 def uid(s): return hashlib.sha1(s.encode()).hexdigest()[:24].upper()
@@ -28,12 +29,14 @@ fixture_build=add('fixtures-build',f'isa = PBXBuildFile; fileRef = {fixtures};')
 test_resource=add('test-resource',f'isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({fixture_build},); runOnlyForDeploymentPostprocessing = 0;')
 assets=add('assets','isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = SOURCE_ROOT;')
 assets_build=add('assets-build',f'isa = PBXBuildFile; fileRef = {assets};')
-app_resource=add('app-resource',f'isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({assets_build},); runOnlyForDeploymentPostprocessing = 0;')
+game_data=add('game-data','isa = PBXFileReference; lastKnownFileType = text.json; path = Sources/AetherCore/Resources/GameDataIndex.json; sourceTree = SOURCE_ROOT;')
+game_data_build=add('game-data-build',f'isa = PBXBuildFile; fileRef = {game_data};')
+app_resource=add('app-resource',f'isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = ({assets_build}, {game_data_build},); runOnlyForDeploymentPostprocessing = 0;')
 app_product=add('app-product','isa = PBXFileReference; explicitFileType = wrapper.application; path = AetherAtlas.app; sourceTree = BUILT_PRODUCTS_DIR;')
 test_product=add('test-product','isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = AetherCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR;')
 ui_product=add('ui-product','isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = AetherAtlasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR;')
 products=add('products',f'isa = PBXGroup; children = ({app_product}, {test_product}, {ui_product},); name = Products; sourceTree = "<group>";')
-source_group=add('source-group',f'isa = PBXGroup; children = {arr(app_refs+[assets])}; name = Sources; sourceTree = "<group>";')
+source_group=add('source-group',f'isa = PBXGroup; children = {arr(app_refs+[assets,game_data])}; name = Sources; sourceTree = "<group>";')
 test_group=add('test-group',f'isa = PBXGroup; children = {arr(test_refs+[fixtures]+ui_refs)}; name = Tests; sourceTree = "<group>";')
 main=add('main-group',f'isa = PBXGroup; children = ({source_group}, {test_group}, {products},); sourceTree = "<group>";')
 def configs(name,extra):
@@ -58,12 +61,18 @@ ref=lambda ident,name: f'<BuildableReference BuildableIdentifier="primary" Bluep
 scheme=f'''<?xml version="1.0" encoding="UTF-8"?>
 <Scheme LastUpgradeVersion="2710" version="1.3">
 <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries><BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">{ref(app,'AetherAtlas.app')}</BuildActionEntry></BuildActionEntries></BuildAction>
-<TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"><Testables><TestableReference skipped="NO">{ref(test,'AetherCoreTests.xctest')}</TestableReference></Testables></TestAction>
-<LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES"><BuildableProductRunnable runnableDebuggingMode="0">{ref(app,'AetherAtlas.app')}</BuildableProductRunnable></LaunchAction>
+<TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"><Testables><TestableReference skipped="NO">{ref(test,'AetherCoreTests.xctest')}</TestableReference></Testables></TestAction>
+<LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES"><BuildableProductRunnable runnableDebuggingMode="0">{ref(app,'AetherAtlas.app')}</BuildableProductRunnable></LaunchAction>
 <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES"><BuildableProductRunnable runnableDebuggingMode="0">{ref(app,'AetherAtlas.app')}</BuildableProductRunnable></ProfileAction>
 <AnalyzeAction buildConfiguration="Debug"/><ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>
 </Scheme>'''
-(root/'AetherAtlas.xcodeproj/xcshareddata/xcschemes/AetherAtlas.xcscheme').write_text(scheme)
+def write_scheme(path, content):
+    # Retain existing formatting when regeneration does not change scheme settings.
+    if path.exists() and ET.canonicalize(path.read_text(), strip_text=True) == ET.canonicalize(content, strip_text=True):
+        return
+    path.write_text(content)
+
+write_scheme(root/'AetherAtlas.xcodeproj/xcshareddata/xcschemes/AetherAtlas.xcscheme',scheme)
 
 ui_scheme=scheme.replace(ref(test,'AetherCoreTests.xctest'),ref(ui,'AetherAtlasUITests.xctest'))
-(root/'AetherAtlas.xcodeproj/xcshareddata/xcschemes/AetherAtlas-UI.xcscheme').write_text(ui_scheme)
+write_scheme(root/'AetherAtlas.xcodeproj/xcshareddata/xcschemes/AetherAtlas-UI.xcscheme',ui_scheme)

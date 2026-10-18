@@ -53,11 +53,15 @@
     private var action: EntitySummary {
       EntitySummary(id: EntityID(kind: .action, row: 3), name: "Fixture Sprint", category: "System")
     }
+    private var questName: String {
+      ProcessInfo.processInfo.environment["AETHER_UI_SYMBOLS"] == "1"
+        ? "\u{e0bf} Fixture Quest" : "Fixture Quest"
+    }
     private var questRow: SheetRow {
       SheetRow(
         rowID: 4,
         fields: [
-          "Name": .string("Fixture Quest"), "ClassJobLevel": .array([.number(10), .number(0)]),
+          "Name": .string(questName), "ClassJobLevel": .array([.number(10), .number(0)]),
           "GilReward": .number(2493),
           "JournalGenre": .object(["fields": .object(["Name": .string("Botanist Quests")])]),
           "Expansion": .object(["fields": .object(["Name": .string("A Realm Reborn")])]),
@@ -73,27 +77,67 @@
     private func entry(for kind: EntityKind, language: GameLanguage) -> EntitySummary {
       if kind == .quest {
         return EntitySummary(
-          id: EntityID(kind: .quest, row: 4), name: "Fixture Quest", category: "Botanist Quests",
+          id: EntityID(kind: .quest, row: 4), name: questName, category: "Botanist Quests",
           level: 10)
       }
       return kind == .action ? action : kind == .recipe ? recipe(language) : item(language)
     }
-    func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage)
+    func search(
+      kind: EntityKind, text: String, cursor: String?, language: GameLanguage, sort: ResultSort
+    )
       async throws -> EntityPage
     {
-      EntityPage(
-        entries: entries(for: kind, language: language).filter {
-          $0.name.localizedCaseInsensitiveContains(text)
-        })
+      let entries = orderedEntries(kind: kind, language: language, sort: sort).filter {
+        $0.name.range(
+          of: text, options: [.caseInsensitive, .diacriticInsensitive], locale: language.locale)
+          != nil
+      }
+      let page = page(entries, after: cursor.flatMap(Int.init))
+      return EntityPage(entries: page.entries, next: page.after.map(String.init))
     }
-    func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage {
-      EntityPage(entries: entries(for: kind, language: language))
+    func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort)
+      async throws -> EntityPage
+    {
+      page(orderedEntries(kind: kind, language: language, sort: sort), after: after)
+    }
+    private func orderedEntries(kind: EntityKind, language: GameLanguage, sort: ResultSort)
+      -> [EntitySummary]
+    {
+      let all =
+        ProcessInfo.processInfo.environment["AETHER_UI_SORTING"] == "1" && kind == .item
+        ? sortingEntries(language) : entries(for: kind, language: language)
+      return sort.ordered(all.sorted { $0.id.row > $1.id.row }, language: language)
+    }
+    private func sortingEntries(_ language: GameLanguage) -> [EntitySummary] {
+      (1...61).map { id in
+        let name =
+          language == .german
+          ? id == 61 ? "Aal im Muster" : id == 1 ? "Zebra im Muster" : "Muster \(id)"
+          : String(format: "Fixture Item %03d", id)
+        return EntitySummary(
+          id: EntityID(kind: .item, row: id), name: name,
+          category: "Test sorting", level: id == 2 ? 9_999 : id)
+      }
+    }
+    private func page(_ entries: [EntitySummary], after: Int?) -> EntityPage {
+      let start = after.flatMap { id in entries.firstIndex { $0.id.row == id }.map { $0 + 1 } } ?? 0
+      let end = min(entries.count, start + 50)
+      return EntityPage(
+        entries: Array(entries[start..<end]),
+        after: end < entries.count ? entries[end - 1].id.row : nil)
     }
     func recipes(item: Int, cursor: String?, language: GameLanguage) async throws -> EntityPage {
       EntityPage(entries: item == 1 ? [recipe(language)] : [])
     }
     func detail(_ id: EntityID, refresh: Bool, language: GameLanguage) async throws -> EntityDetail
     {
+      if id.kind == .item, ProcessInfo.processInfo.environment["AETHER_UI_SORTING"] == "1",
+        let entity = sortingEntries(language).first(where: { $0.id == id })
+      {
+        return EntityDetail(
+          entity: entity, row: SheetRow(rowID: id.row, fields: ["Name": .string(entity.name)]),
+          schema: "test", version: "test", isStale: false)
+      }
       if id.kind == .quest {
         let journal = QuestJournal(rows: [
           SheetRow(

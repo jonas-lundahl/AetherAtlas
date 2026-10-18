@@ -53,6 +53,12 @@ jobs:
           echo "value=$version" >> "$GITHUB_OUTPUT"
           echo "Release version: $version (Europe/Stockholm)"
 
+      - name: Check that the committed game-data index is current
+        run: |
+          set -euo pipefail
+          python3 Scripts/test_update_game_data.py
+          python3 Scripts/update_game_data.py --check-latest
+
       - name: Run core and native text tests
         run: |
           set -euo pipefail

@@ -43,6 +43,42 @@ public enum GameLanguage: String, Codable, CaseIterable, Sendable, Identifiable 
   }
 }
 
+public enum ResultSort: String, CaseIterable, Sendable, Identifiable {
+  case original = "Original order"
+  case name = "Name"
+  case level = "Level (highest first)"
+  public var id: Self { self }
+
+  static func nameKey(_ name: String) -> String {
+    String(
+      String.UnicodeScalarView(
+        name.unicodeScalars.filter {
+          $0.properties.generalCategory != .privateUse
+        })
+    ).trimmingCharacters(in: .whitespacesAndNewlines)
+  }
+  static func compare(_ lhs: String, _ rhs: String, locale: Locale) -> ComparisonResult {
+    lhs.compare(
+      rhs, options: [.numeric, .caseInsensitive, .diacriticInsensitive, .widthInsensitive],
+      locale: locale)
+  }
+  public func ordered(_ entries: [EntitySummary], language: GameLanguage) -> [EntitySummary] {
+    guard self != .original else { return entries }
+    return entries.sorted { lhs, rhs in
+      if self == .name {
+        let comparison = Self.compare(
+          Self.nameKey(lhs.displayName), Self.nameKey(rhs.displayName),
+          locale: language.locale)
+        if comparison != .orderedSame { return comparison == .orderedAscending }
+      } else if lhs.level != rhs.level {
+        return (lhs.level ?? -1) > (rhs.level ?? -1)
+      }
+      if lhs.id.row != rhs.id.row { return lhs.id.row > rhs.id.row }
+      return lhs.id.kind.rawValue < rhs.id.kind.rawValue
+    }
+  }
+}
+
 public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
   case item = "Item"
   case recipe = "Recipe"

@@ -27,6 +27,85 @@ import XCTest
     assertDisplayedText(name, in: app.staticTexts["entityDetailName"], file: file, line: line)
   }
 
+  func testSortingUsesTheEntireCategoryAndSearchBeforePagination() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_SORTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let newest = app.descendants(matching: .any)["entity-Item:61"]
+    let alphabetical = app.descendants(matching: .any)["entity-Item:1"]
+    let highestLevel = app.descendants(matching: .any)["entity-Item:2"]
+    XCTAssertTrue(newest.waitForExistence(timeout: 10))
+    XCTAssertFalse(alphabetical.exists)
+    func sort(_ label: String) {
+      app.menuButtons["resultSort"].click()
+      app.menuItems[label].click()
+    }
+    sort("Name")
+    XCTAssertTrue(alphabetical.waitForExistence(timeout: 5))
+    XCTAssertLessThan(alphabetical.frame.minY, highestLevel.frame.minY)
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    app.buttons["Load More"].click()
+    XCTAssertTrue(app.staticTexts["61 loaded"].waitForExistence(timeout: 5))
+    sort("Level (highest first)")
+    XCTAssertTrue(highestLevel.waitForExistence(timeout: 5))
+    XCTAssertLessThan(highestLevel.frame.minY, newest.frame.minY)
+    app.searchFields.firstMatch.click()
+    app.searchFields.firstMatch.typeText("Fixture Item")
+    XCTAssertTrue(app.staticTexts["Results for “Fixture Item”"].waitForExistence(timeout: 5))
+    sort("Name")
+    XCTAssertTrue(alphabetical.waitForExistence(timeout: 5))
+    XCTAssertLessThan(alphabetical.frame.minY, highestLevel.frame.minY)
+    app.typeKey(.escape, modifierFlags: [])
+    let picker = app.descendants(matching: .any).matching(identifier: "gameLanguagePicker")
+      .firstMatch
+    picker.radioButtons["🇩🇪"].click()
+    XCTAssertTrue(newest.waitForExistence(timeout: 5))
+    assertDisplayedText("Aal im Muster", in: newest)
+  }
+
+  func testUnavailableOptionalFontDoesNotBlockQuestBrowsing() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_SYMBOLS"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let category = app.descendants(matching: .any).matching(identifier: "category-Quest").firstMatch
+    XCTAssertTrue(category.waitForExistence(timeout: 10))
+    category.click()
+    let quest = app.descendants(matching: .any)["entity-Quest:4"]
+    XCTAssertTrue(quest.waitForExistence(timeout: 5))
+    quest.click()
+    assertDisplayedText("\u{e0bf} Fixture Quest", in: app.staticTexts["entityDetailName"])
+    XCTAssertTrue(app.staticTexts["Description"].waitForExistence(timeout: 5))
+    XCTAssertEqual(app.alerts.count, 0)
+    app.buttons["Open Fixture Potion, Item"].click()
+    XCTAssertTrue(app.buttons["Open Fixture Potion, Recipe"].waitForExistence(timeout: 5))
+  }
+
+  func testBundledPatchIsVisibleAndBrowseStartsWithHighestID() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let patch = app.staticTexts["gameDataPatch"]
+    XCTAssertTrue(patch.waitForExistence(timeout: 10))
+    XCTAssertNotNil(
+      ((patch.value as? String) ?? patch.label).range(
+        of: #"^Game data · Patch [0-9]+\.[0-9]+(x[0-9]+)?$"#, options: .regularExpression))
+    let water = app.descendants(matching: .any)["entity-Item:3"]
+    let potion = app.descendants(matching: .any)["entity-Item:1"]
+    XCTAssertTrue(potion.waitForExistence(timeout: 5))
+    XCTAssertLessThan(water.frame.minY, potion.frame.minY)
+    app.descendants(matching: .any).matching(identifier: "category-Quest").firstMatch.click()
+    XCTAssertTrue(app.descendants(matching: .any)["entity-Quest:4"].waitForExistence(timeout: 5))
+    XCTAssertTrue(patch.exists)
+  }
+
   func testMouseClicksKeepHighlightAndDetailsTogether() {
     continueAfterFailure = false
     let app = XCUIApplication()
@@ -48,9 +127,9 @@ import XCTest
       water.coordinate(withNormalizedOffset: point).click()
       assertSelectedResult("Item:3", name: "Fixture Water", in: app)
     }
-    app.typeKey(.upArrow, modifierFlags: [])
-    assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
     app.typeKey(.downArrow, modifierFlags: [])
+    assertSelectedResult("Item:1", name: "Fixture Potion", in: app)
+    app.typeKey(.upArrow, modifierFlags: [])
     assertSelectedResult("Item:3", name: "Fixture Water", in: app)
     potion.click()
     assertSelectedResult("Item:1", name: "Fixture Potion", in: app)

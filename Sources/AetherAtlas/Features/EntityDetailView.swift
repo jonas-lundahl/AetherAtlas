@@ -101,10 +101,10 @@ struct EntityDetailView: View {
                 path: detail.entity.iconPath, kind: detail.entity.id.kind, icons: workspace.icons,
                 size: 68)
               VStack(alignment: .leading, spacing: 6) {
-                Text(detail.entity.displayName).font(
+                GameText(detail.entity.displayName).font(
                   .system(size: 28, weight: .semibold, design: .serif)
                 ).textSelection(.enabled).accessibilityIdentifier("entityDetailName")
-                Text(
+                GameText(
                   detail.entity.category.flatMap { $0.isEmpty ? nil : $0 }
                     ?? detail.entity.id.kind.singular
                 ).font(.subheadline).foregroundStyle(.secondary)
@@ -332,9 +332,9 @@ struct EntityDetailView: View {
       HStack(spacing: 10) {
         GameIcon(path: entity.iconPath, kind: entity.id.kind, icons: workspace.icons, size: 30)
         VStack(alignment: .leading, spacing: 3) {
-          Text(entity.displayName).foregroundStyle(.primary)
+          GameText(entity.displayName).foregroundStyle(.primary)
           if let category = entity.category, !category.isEmpty {
-            Text(category).font(.caption).foregroundStyle(.secondary)
+            GameText(category).font(.caption).foregroundStyle(.secondary)
           }
         }
         Spacer()
@@ -416,7 +416,7 @@ struct MetadataRow: View {
     HStack(alignment: .firstTextBaseline, spacing: 16) {
       Text(label).foregroundStyle(.secondary).frame(minWidth: 130, alignment: .leading)
       Spacer(minLength: 0)
-      Text(value).multilineTextAlignment(.trailing).textSelection(.enabled)
+      GameText(value).multilineTextAlignment(.trailing).textSelection(.enabled)
     }.font(.callout).accessibilityElement(children: .combine)
       .accessibilityIdentifier("metadata-\(label)")
   }

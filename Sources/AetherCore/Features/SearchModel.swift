@@ -3,6 +3,9 @@ import Observation
 
 @MainActor @Observable public final class SearchModel {
   public var query = "" { didSet { if query != oldValue { schedule() } } }
+  public var sort: ResultSort = .original {
+    didSet { if sort != oldValue { schedule(immediate: true) } }
+  }
   public var kind: EntityKind = .item { didSet { if kind != oldValue { schedule() } } }
   public var language: GameLanguage {
     didSet { if language != oldValue { schedule(immediate: true) } }
@@ -43,6 +46,7 @@ import Observation
     let token = revision
     let kind = kind
     let language = language
+    let sort = sort
     let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
     entries = []
     next = nil
@@ -59,8 +63,8 @@ import Observation
         let page =
           try await
           (text.isEmpty
-          ? repository.browse(kind: kind, after: nil, language: language)
-          : repository.search(kind: kind, text: text, cursor: nil, language: language))
+          ? repository.browse(kind: kind, after: nil, language: language, sort: sort)
+          : repository.search(kind: kind, text: text, cursor: nil, language: language, sort: sort))
         try Task.checkCancellation()
         guard let self, token == self.revision else { return }
         self.entries = page.entries
@@ -80,6 +84,7 @@ import Observation
     let token = revision
     let kind = kind
     let language = language
+    let sort = sort
     let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
     let cursor = next
     let last = after
@@ -90,8 +95,8 @@ import Observation
       let page =
         try await
         (text.isEmpty
-        ? repository.browse(kind: kind, after: last, language: language)
-        : repository.search(kind: kind, text: text, cursor: cursor, language: language))
+        ? repository.browse(kind: kind, after: last, language: language, sort: sort)
+        : repository.search(kind: kind, text: text, cursor: cursor, language: language, sort: sort))
       try Task.checkCancellation()
       guard token == revision else { return }
       var seen = Set(entries.map(\.id))

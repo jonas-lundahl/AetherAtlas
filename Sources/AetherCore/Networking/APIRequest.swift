@@ -23,6 +23,7 @@ public struct APIRequest: Sendable {
   public let path: String
   public let parameters: [URLQueryItem]
   private let sheetName: String?
+  private var snapshot: GameDataSnapshot?
   public init(path: String, parameters: [URLQueryItem] = []) {
     self.path = path
     self.parameters = parameters
@@ -43,12 +44,26 @@ public struct APIRequest: Sendable {
       }
       components?.percentEncodedPath = base.path + "/sheet/" + sheet
     }
-    components?.queryItems = parameters
+    var query = parameters
+    if path == "search" || path.hasPrefix("sheet/") || path == "asset" || path.hasPrefix("asset/") {
+      let pin = try snapshot ?? GameDataIndex.bundled.get().snapshot
+      query.removeAll { $0.name == "version" || $0.name == "schema" }
+      query.append(.init(name: "version", value: pin.version))
+      if path != "asset" && !path.hasPrefix("asset/") {
+        query.append(.init(name: "schema", value: pin.schema))
+      }
+    }
+    components?.queryItems = query
     // '+' has form semantics on the API; URLComponents leaves it literal by default.
     let encodedQuery = components?.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
     components?.percentEncodedQuery = encodedQuery
     guard let url = components?.url else { throw APIError.invalidURL }
     return url
+  }
+  public func pinned(to snapshot: GameDataSnapshot) -> Self {
+    var request = self
+    request.snapshot = snapshot
+    return request
   }
   public static func literal(_ text: String) -> String {
     "\""
@@ -89,6 +104,14 @@ public struct APIRequest: Sendable {
       p.append(.init(name: "transient", value: "Description,Description@as(html)"))
     }
     return Self(path: "sheet/\(id.kind.rawValue)/\(id.row)", parameters: p)
+  }
+  public static func rows(kind: EntityKind, ids: [Int], language: GameLanguage = .english) -> Self {
+    Self(
+      path: "sheet/\(kind.rawValue)",
+      parameters: common(kind.summaryFields, language: language) + [
+        .init(name: "rows", value: ids.map(String.init).joined(separator: ",")),
+        .init(name: "limit", value: String(ids.count)),
+      ])
   }
   public static func recipes(item: Int, cursor: String? = nil, language: GameLanguage = .english)
     -> Self

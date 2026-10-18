@@ -5,7 +5,7 @@ struct BrowserView: View {
   @FocusState private var searchFocused: Bool
   @FocusState private var resultsFocused: Bool
   @State private var savedSelection: EntityID?
-  @State private var sort: ResultSort = .relevance
+  @State private var sort: ResultSort = .original
   var body: some View {
     @Bindable var search = workspace.search
     NavigationSplitView {
@@ -19,6 +19,8 @@ struct BrowserView: View {
         .navigationSplitViewColumnWidth(min: 380, ideal: 600)
     }
     .navigationSplitViewStyle(.balanced)
+    .environment(\.gameSymbolFont, workspace.symbolFont.font)
+    .task { await workspace.symbolFont.load() }
     .searchable(text: $search.query, prompt: "Search \(search.kind.title.lowercased())")
     .searchFocused($searchFocused)
     .toolbar {
@@ -32,8 +34,12 @@ struct BrowserView: View {
     .onChange(of: workspace.searchFocus) { searchFocused = true }
     .onChange(of: workspace.section) { _, section in
       savedSelection = nil
-      if case .category(let kind) = section { search.kind = kind }
+      if case .category(let kind) = section {
+        search.sort = sort
+        search.kind = kind
+      }
     }
+    .onChange(of: sort) { if !isSaved { search.sort = sort } }
     .onChange(of: search.query) {
       if case .category = workspace.section {} else { workspace.section = .category(search.kind) }
     }
@@ -100,6 +106,11 @@ struct BrowserView: View {
         .fixedSize()
         .padding(.bottom, 10)
         Label("XIVAPI v2", systemImage: "network").font(.caption.weight(.medium))
+        Text(
+          (try? GameDataIndex.bundled.get().snapshot.patch).map { "Game data · Patch \($0)" }
+            ?? "Game data unavailable"
+        ).font(.caption2).foregroundStyle(.secondary)
+          .accessibilityIdentifier("gameDataPatch")
         Text("An Eorzean field guide").font(.caption2).foregroundStyle(.tertiary)
       }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
     }
@@ -124,16 +135,9 @@ struct BrowserView: View {
       })
   }
   private var displayedEntries: [EntitySummary] {
-    let entries = isSaved ? savedEntries : workspace.search.entries
-    switch sort {
-    case .relevance: return entries
-    case .name:
-      return entries.sorted {
-        $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
-      }
-    case .level: return entries.sorted { ($0.level ?? -1) > ($1.level ?? -1) }
-    }
+    isSaved ? sort.ordered(savedEntries, language: workspace.language) : workspace.search.entries
   }
+
   private var results: some View {
     VStack(spacing: 0) {
       HStack {
@@ -149,12 +153,12 @@ struct BrowserView: View {
         }
         Spacer()
         Menu {
-          Picker("Sort loaded results", selection: $sort) {
+          Picker("Sort results", selection: $sort) {
             ForEach(ResultSort.allCases) { Text($0.rawValue).tag($0) }
           }
         } label: {
           Image(systemName: "arrow.up.arrow.down")
-        }.menuStyle(.borderlessButton).fixedSize().help("Sort loaded results")
+        }.menuStyle(.borderlessButton).fixedSize().help("Sort all results")
           .accessibilityIdentifier("resultSort")
       }.padding(16)
       Divider()
@@ -253,12 +257,6 @@ struct BrowserView: View {
     }.navigationTitle(workspace.section.title)
   }
 }
-private enum ResultSort: String, CaseIterable, Identifiable {
-  case relevance = "Original order"
-  case name = "Name"
-  case level = "Level (highest first)"
-  var id: Self { self }
-}
 
 struct ResultRow: View {
   let entity: EntitySummary
@@ -269,8 +267,8 @@ struct ResultRow: View {
     HStack(spacing: 11) {
       GameIcon(path: entity.iconPath, kind: entity.id.kind, icons: icons)
       VStack(alignment: .leading, spacing: 4) {
-        Text(entity.displayName).font(.body.weight(.medium)).lineLimit(2)
-        Text(entity.category.flatMap { $0.isEmpty ? nil : $0 } ?? entity.id.kind.singular).font(
+        GameText(entity.displayName).font(.body.weight(.medium)).lineLimit(2)
+        GameText(entity.category.flatMap { $0.isEmpty ? nil : $0 } ?? entity.id.kind.singular).font(
           .caption
         ).foregroundStyle(.secondary).lineLimit(1)
       }

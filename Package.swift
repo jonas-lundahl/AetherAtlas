@@ -6,7 +6,7 @@ let package = Package(
   platforms: [.macOS("26.0")],
   products: [.library(name: "AetherCore", targets: ["AetherCore"])],
   targets: [
-    .target(name: "AetherCore"),
+    .target(name: "AetherCore", resources: [.copy("Resources/GameDataIndex.json")]),
     .testTarget(
       name: "AetherCoreTests", dependencies: ["AetherCore"], resources: [.copy("Fixtures")]),
   ],

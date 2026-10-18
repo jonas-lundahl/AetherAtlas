@@ -179,7 +179,8 @@ func strictCacheDirectivesPreventOfflineReuse(control: String) async throws {
   defer { try? FileManager.default.removeItem(at: directory) }
   let transport = StubTransport("invalid")
   let repository = LiveGameRepository(
-    cache: ResponseCache(client: XIVAPIClient(transport: transport), directory: directory))
+    cache: ResponseCache(client: XIVAPIClient(transport: transport), directory: directory),
+    index: try testGameDataIndex())
   await #expect(throws: APIError.self) { try await repository.search(kind: .item, text: "a") }
   await #expect(throws: APIError.self) { try await repository.search(kind: .item, text: "a") }
   #expect(await transport.count == 2)
@@ -190,7 +191,8 @@ func strictCacheDirectivesPreventOfflineReuse(control: String) async throws {
   let transport = StubTransport(
     #"{"results":[],"rows":[],"row_id":4551,"fields":{"Name":"Potion"}}"#)
   let repository = LiveGameRepository(
-    cache: ResponseCache(client: XIVAPIClient(transport: transport), directory: directory))
+    cache: ResponseCache(client: XIVAPIClient(transport: transport), directory: directory),
+    index: try testGameDataIndex())
   for language in GameLanguage.allCases {
     for _ in 0..<2 {
       _ = try await repository.search(kind: .item, text: "potion", language: language)
@@ -200,13 +202,13 @@ func strictCacheDirectivesPreventOfflineReuse(control: String) async throws {
     }
   }
   let requests = await transport.requests
-  #expect(requests.count == 16)
+  #expect(requests.count == 12)
   for language in GameLanguage.allCases {
     #expect(
       requests.filter {
         URLComponents(url: $0.url!, resolvingAgainstBaseURL: false)?.queryItems?
           .contains { $0.name == "language" && $0.value == language.rawValue } == true
-      }.count == 4)
+      }.count == 3)
   }
 }
 @Test func unsupportedLibrarySchemaPreservesData() async throws {

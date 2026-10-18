@@ -5,7 +5,7 @@ struct GameDescriptionText: View {
   @Environment(\.colorScheme) private var colorScheme
 
   var body: some View {
-    Text(Self.attributed(description, colorScheme: colorScheme))
+    GameText(Self.attributed(description, colorScheme: colorScheme))
       .font(.body)
       .lineSpacing(5)
       .textSelection(.enabled)

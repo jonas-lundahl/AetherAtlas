@@ -4,6 +4,7 @@ import Observation
 @MainActor @Observable final class Workspace {
   let cache: ResponseCache
   let icons: IconStore
+  let symbolFont: GameSymbolFontStore
   let search: SearchModel
   let detail: DetailModel
   let library: LibraryModel
@@ -40,6 +41,8 @@ import Observation
     var iconResponses = cache
     var repo: any GameRepository = LiveGameRepository(cache: cache)
     var libraryFile = support.appendingPathComponent("library.json")
+    var symbolFontFile = support.appendingPathComponent("Fonts/FFXIV_Lodestone_SSF.ttf")
+    var downloadSymbolFont: @Sendable () async throws -> Data = SymbolFontCache.download
     var releaseClient: any AppReleaseChecking = GitHubReleaseClient()
     var preferences = UserDefaults.standard
     #if DEBUG
@@ -53,6 +56,8 @@ import Observation
         preferences = UserDefaults(suiteName: "AetherAtlas-UI-\(session)")!
         libraryFile = fm.temporaryDirectory.appendingPathComponent(
           "AetherAtlas-UI-\(session)/library.json")
+        symbolFontFile = libraryFile.deletingLastPathComponent().appendingPathComponent("font.ttf")
+        downloadSymbolFont = { throw URLError(.notConnectedToInternet) }
         iconResponses = ResponseCache(
           client: XIVAPIClient(transport: UITestIconTransport()),
           directory: fm.temporaryDirectory.appendingPathComponent("AetherAtlas-UI-\(session)/Icons")
@@ -60,6 +65,9 @@ import Observation
       }
     #endif
     icons = IconStore(responses: iconResponses)
+    symbolFont = GameSymbolFontStore(
+      cache: SymbolFontCache(
+        file: symbolFontFile, download: downloadSymbolFont, validate: GameSymbolFont.validate))
     self.preferences = preferences
     let language =
       preferences.string(forKey: "gameLanguage").flatMap(GameLanguage.init(rawValue:)) ?? .english

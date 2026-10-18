@@ -11,6 +11,9 @@ build_number=$2
 project_root=$(cd "$(dirname "$0")/.." && pwd)
 cd "$project_root"
 
+# Package exactly the repository's snapshot, without contacting XIVAPI.
+python3 Scripts/update_game_data.py --check
+
 archive="$project_root/build/Release/AetherAtlas-$version.xcarchive"
 distribution="$project_root/build/Distribution"
 asset_name="AetherAtlas-$version-macOS-universal.zip"
@@ -31,6 +34,7 @@ architectures=$(/usr/bin/lipo -archs "$app/Contents/MacOS/AetherAtlas")
 [[ " $architectures " == *' arm64 '* && " $architectures " == *' x86_64 '* ]]
 echo "Verified architectures: $architectures"
 /usr/bin/codesign --verify --deep --strict "$app"
+cmp Sources/AetherCore/Resources/GameDataIndex.json "$app/Contents/Resources/GameDataIndex.json"
 
 /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$app" "$distribution/$asset_name"
 /usr/bin/unzip -tq "$distribution/$asset_name"

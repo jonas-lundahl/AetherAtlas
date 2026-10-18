@@ -15,10 +15,14 @@ actor FeatureRepository: GameRepository {
   var searchLanguages: [GameLanguage] = []
   var browseLanguages: [GameLanguage] = []
   var recipeLanguages: [GameLanguage] = []
+  var sorts: [ResultSort] = []
   func setFailure(_ value: Bool) { fails = value }
-  func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage) async throws
+  func search(
+    kind: EntityKind, text: String, cursor: String?, language: GameLanguage, sort: ResultSort
+  ) async throws
     -> EntityPage
   {
+    sorts.append(sort)
     searches.append(text)
     searchLanguages.append(language)
     if text == "old" { try? await Task.sleep(for: .milliseconds(150)) }
@@ -27,7 +31,9 @@ actor FeatureRepository: GameRepository {
       entries: [EntitySummary(id: EntityID(kind: kind, row: cursor == nil ? 1 : 2), name: text)],
       next: cursor == nil ? "page2" : nil)
   }
-  func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage {
+  func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort) async throws
+    -> EntityPage
+  {
     browses += 1
     browseLanguages.append(language)
     return EntityPage(entries: [EntitySummary(id: EntityID(kind: kind, row: 10), name: "Browse")])
@@ -175,10 +181,12 @@ func fixture(_ name: String) throws -> Data {
 actor UncooperativeRepository: GameRepository {
   var continuation: CheckedContinuation<EntityPage, Never>?
   var started: Bool { continuation != nil }
-  func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage) async throws
+  func search(
+    kind: EntityKind, text: String, cursor: String?, language: GameLanguage, sort: ResultSort
+  ) async throws
     -> EntityPage
   {
-    if text == "old", language == .english {
+    if text == "old", language == .english, sort == .original {
       return await withCheckedContinuation { continuation = $0 }
     }
     return EntityPage(entries: [
@@ -192,7 +200,9 @@ actor UncooperativeRepository: GameRepository {
       ))
     continuation = nil
   }
-  func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage {
+  func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort) async throws
+    -> EntityPage
+  {
     EntityPage(entries: [])
   }
   func detail(_ id: EntityID, refresh: Bool, language: GameLanguage) async throws -> EntityDetail {
@@ -230,10 +240,14 @@ actor SuspendedDetailRepository: GameRepository {
   var continuation: CheckedContinuation<EntityDetail, Never>?
   var started: Bool { continuation != nil }
   var recipeLanguages: [GameLanguage] = []
-  func search(kind: EntityKind, text: String, cursor: String?, language: GameLanguage) async throws
+  func search(
+    kind: EntityKind, text: String, cursor: String?, language: GameLanguage, sort: ResultSort
+  ) async throws
     -> EntityPage
   { EntityPage(entries: []) }
-  func browse(kind: EntityKind, after: Int?, language: GameLanguage) async throws -> EntityPage {
+  func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort) async throws
+    -> EntityPage
+  {
     EntityPage(entries: [])
   }
   func detail(_ id: EntityID, refresh: Bool, language: GameLanguage) async throws -> EntityDetail {
@@ -313,3 +327,26 @@ actor SuspendedDetailRepository: GameRepository {
     workspace.search.cancel()
   }
 #endif
+
+@Test @MainActor func sortChangeRestartsPaginationAndRejectsObsoleteResults() async throws {
+  let repository = FeatureRepository()
+  let search = SearchModel(repository: repository, debounce: .zero)
+  search.query = "potion"
+  try await eventually { !search.isLoading }
+  await search.loadMore()
+  search.selection = search.entries.first?.id
+  search.sort = .name
+  #expect(search.entries.isEmpty && search.selection == nil && !search.canLoadMore)
+  try await eventually { !search.isLoading }
+  #expect(search.entries.count == 1)
+  #expect(await repository.sorts == [.original, .original, .name])
+  let suspended = UncooperativeRepository()
+  let model = SearchModel(repository: suspended, debounce: .zero)
+  model.query = "old"
+  try await eventually { await suspended.started }
+  model.sort = .level
+  try await eventually { !model.isLoading }
+  await suspended.finishOld()
+  try await Task.sleep(for: .milliseconds(10))
+  #expect(model.entries.first?.id.row == 2)
+}

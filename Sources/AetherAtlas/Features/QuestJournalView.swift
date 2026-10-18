@@ -31,7 +31,7 @@ struct QuestJournalView: View {
           .accessibilityElement(children: .combine)
           .accessibilityLabel(
             "Level \(detail.entity.level.map(language.formatNumber) ?? "unknown")")
-        Text(detail.entity.displayName)
+        GameText(detail.entity.displayName)
           .font(.system(size: 26, weight: .medium, design: .serif))
           .multilineTextAlignment(.center)
           .textSelection(.enabled)
@@ -124,12 +124,12 @@ struct QuestJournalView: View {
       rewardItems("Reward", counts: "ItemCountReward")
       rewardItems("OptionalItemReward", counts: "OptionalItemCountReward", optional: true)
       if let other = detail.row["OtherReward"].referenceName, !other.isEmpty {
-        Text(other).textSelection(.enabled)
+        GameText(other).textSelection(.enabled)
       }
       if let other = detail.row["QuestRewardOtherDisplay"].referenceName, !other.isEmpty,
         other != detail.row["OtherReward"].referenceName
       {
-        Text(other).textSelection(.enabled)
+        GameText(other).textSelection(.enabled)
       }
     }
   }
@@ -175,7 +175,7 @@ struct QuestJournalView: View {
         } label: {
           HStack(spacing: 10) {
             GameIcon(path: entity.iconPath, kind: .item, icons: icons, size: 32)
-            Text(entity.displayName)
+            GameText(entity.displayName)
             if optional, detail.row["OptionalItemIsHQReward"].array.indices.contains(index),
               detail.row["OptionalItemIsHQReward"].array[index].boolean == true
             {
