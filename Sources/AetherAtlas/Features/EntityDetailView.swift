@@ -63,7 +63,7 @@ struct EntityDetailView: View {
       await model.load(id, refresh: refresh > 0)
     }
     .onChange(of: model.detail?.entity) { _, entity in
-      if let entity { Task { await workspace.library.record(entity) } }
+      if let entity { Task { await workspace.recordLoadedEntity(entity) } }
     }
   }
   private var objectLanguagePicker: some View {

@@ -82,7 +82,7 @@ actor FeatureRepository: GameRepository {
   #expect(search.entries.first?.name == "new")
   #expect(search.error == nil)
 }
-@Test @MainActor func searchFailureRetryPaginationAndSelection() async throws {
+@Test @MainActor func searchFailureRetryAndPagination() async throws {
   let repository = FeatureRepository()
   let search = SearchModel(repository: repository, debounce: .zero)
   await repository.setFailure(true)
@@ -93,8 +93,6 @@ actor FeatureRepository: GameRepository {
   search.retry()
   try await eventually { !search.isLoading }
   #expect(search.error == nil)
-  search.selection = search.entries.first?.id
-  #expect(search.selection?.row == 1)
   await search.loadMore()
   #expect(search.entries.count == 2)
   #expect(!search.canLoadMore)
@@ -131,10 +129,8 @@ actor FeatureRepository: GameRepository {
   try await eventually { !search.isLoading }
   await search.loadMore()
   #expect(search.entries.count == 2)
-  search.selection = search.entries.first?.id
   search.language = .french
   #expect(search.entries.isEmpty)
-  #expect(search.selection == nil)
   #expect(!search.canLoadMore)
   #expect(search.query == "potion")
   try await eventually { !search.isLoading }
@@ -334,9 +330,8 @@ actor SuspendedDetailRepository: GameRepository {
   search.query = "potion"
   try await eventually { !search.isLoading }
   await search.loadMore()
-  search.selection = search.entries.first?.id
   search.sort = .name
-  #expect(search.entries.isEmpty && search.selection == nil && !search.canLoadMore)
+  #expect(search.entries.isEmpty && !search.canLoadMore)
   try await eventually { !search.isLoading }
   #expect(search.entries.count == 1)
   #expect(await repository.sorts == [.original, .original, .name])

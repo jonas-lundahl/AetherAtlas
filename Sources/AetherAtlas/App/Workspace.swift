@@ -20,6 +20,7 @@ import Observation
     }
   }
   private var objectLanguages: [EntityID: GameLanguage] = [:]
+  private var historyPreview: EntityID?
   var objectLanguageOverride: GameLanguage? {
     get { navigation.current.flatMap { objectLanguages[$0.id] } }
     set {
@@ -80,7 +81,31 @@ import Observation
         as? String
         ?? "Unknown", client: releaseClient)
   }
-  func open(_ entity: EntitySummary) { navigation.open(entity) }
+  func open(_ entity: EntitySummary) {
+    let wasPreview = historyPreview == entity.id && navigation.current?.id == entity.id
+    historyPreview = nil
+    navigation.open(entity)
+    // Opening the same object elsewhere turns a history preview into a visit,
+    // even when the already loaded details do not need another request.
+    if wasPreview {
+      let summary = detail.detail.flatMap { $0.entity.id == entity.id ? $0.entity : nil } ?? entity
+      Task { await library.record(summary) }
+    }
+  }
+
+  func openResult(_ entity: EntitySummary) {
+    if section == .history {
+      historyPreview = entity.id
+      navigation.open(entity)
+    } else {
+      open(entity)
+    }
+  }
+
+  func recordLoadedEntity(_ entity: EntitySummary) async {
+    guard entity.id == navigation.current?.id, entity.id != historyPreview else { return }
+    await library.record(entity)
+  }
 }
 enum BrowserSection: Hashable {
   case category(EntityKind)

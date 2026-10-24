@@ -16,15 +16,114 @@ import XCTest
     file: StaticString = #filePath, line: UInt = #line
   ) {
     let results = app.descendants(matching: .any).matching(identifier: "entityResults").firstMatch
-    let row = results.outlineRows.containing(.any, identifier: "entity-\(id)").firstMatch
+    let row = results.tableRows.containing(.any, identifier: "entity-\(id)").firstMatch
     XCTAssertTrue(row.exists, results.debugDescription, file: file, line: line)
     let selected = NSPredicate(format: "selected == true")
     XCTAssertEqual(
       XCTWaiter.wait(
         for: [XCTNSPredicateExpectation(predicate: selected, object: row)], timeout: 3),
       .completed, "Expected \(id) to be highlighted", file: file, line: line)
-    XCTAssertEqual(results.outlineRows.matching(selected).count, 1, file: file, line: line)
+    XCTAssertEqual(results.tableRows.matching(selected).count, 1, file: file, line: line)
     assertDisplayedText(name, in: app.staticTexts["entityDetailName"], file: file, line: line)
+  }
+
+  func testScrollingClickingAndKeyboardNavigationKeepOnePosition() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_SORTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let results = app.tables["entityResults"]
+    let first = app.descendants(matching: .any)["entity-Item:61"]
+    XCTAssertTrue(first.waitForExistence(timeout: 10))
+    first.click()
+    app.typeKey("s", modifierFlags: [])
+    assertSelectedResult("Item:60", name: "Fixture Item 060", in: app)
+    app.typeKey("w", modifierFlags: [])
+    assertSelectedResult("Item:61", name: "Fixture Item 061", in: app)
+
+    // Leave the selected row far outside the viewport, then click a visible row.
+    results.scroll(byDeltaX: 0, deltaY: -1600)
+    let id = 33
+    let row = app.descendants(matching: .any)["entity-Item:\(id)"]
+    XCTAssertTrue(row.exists)
+    XCTAssertGreaterThan(row.frame.midY, results.frame.minY + 80)
+    XCTAssertLessThan(row.frame.midY, results.frame.maxY - 80)
+    let position = row.frame.midY
+    row.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)).click()
+    assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
+    XCTAssertEqual(row.frame.midY, position, accuracy: 2)
+    app.typeKey("s", modifierFlags: [])
+    assertSelectedResult(
+      "Item:\(id - 1)", name: String(format: "Fixture Item %03d", id - 1), in: app)
+    app.typeKey(.upArrow, modifierFlags: [])
+    assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
+    app.typeKey("w", modifierFlags: [])
+    assertSelectedResult(
+      "Item:\(id + 1)", name: String(format: "Fixture Item %03d", id + 1), in: app)
+    app.typeKey(.downArrow, modifierFlags: [])
+    assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
+    app.buttons["Load More"].click()
+    XCTAssertTrue(app.staticTexts["61 loaded"].waitForExistence(timeout: 5))
+    XCTAssertEqual(row.frame.midY, position, accuracy: 2)
+    row.click()
+    app.typeKey(.return, modifierFlags: [])
+    assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
+    XCTAssertEqual(row.frame.midY, position, accuracy: 2)
+
+    app.typeKey("f", modifierFlags: .command)
+    app.searchFields.firstMatch.typeText("ws")
+    XCTAssertEqual(app.searchFields.firstMatch.value as? String, "ws")
+    XCTAssertTrue(app.staticTexts["No matching entities"].waitForExistence(timeout: 5))
+  }
+
+  func testHistorySelectionDoesNotRecordVisits() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_SORTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let first = app.descendants(matching: .any)["entity-Item:61"]
+    XCTAssertTrue(first.waitForExistence(timeout: 10))
+    first.click()
+    assertSelectedResult("Item:61", name: "Fixture Item 061", in: app)
+    for id in [60, 59] {
+      app.typeKey("s", modifierFlags: [])
+      assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
+    }
+    let history = app.descendants(matching: .any).matching(identifier: "sidebar-history").firstMatch
+    history.click()
+    XCTAssertTrue(app.staticTexts["3 saved locally"].waitForExistence(timeout: 5))
+    let middle = app.descendants(matching: .any)["entity-Item:60"]
+    let last = app.descendants(matching: .any)["entity-Item:61"]
+    XCTAssertLessThan(middle.frame.minY, last.frame.minY)
+    let position = last.frame.midY
+    app.descendants(matching: .any)["entity-Item:59"].click()
+    for id in [60, 61] {
+      app.typeKey(.downArrow, modifierFlags: [])
+      assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
+    }
+    app.typeKey("w", modifierFlags: [])
+    assertSelectedResult("Item:60", name: "Fixture Item 060", in: app)
+    app.typeKey("s", modifierFlags: [])
+    assertSelectedResult("Item:61", name: "Fixture Item 061", in: app)
+    XCTAssertEqual(last.frame.midY, position, accuracy: 2)
+    app.descendants(matching: .any).matching(identifier: "category-Item").firstMatch.click()
+    history.click()
+    XCTAssertLessThan(middle.frame.minY, last.frame.minY)
+    // Opening the same preview from another list is a new visit, even with
+    // already loaded details. History selection must not disable future visits.
+    app.descendants(matching: .any).matching(identifier: "category-Item").firstMatch.click()
+    first.click()
+    history.click()
+    XCTAssertLessThan(last.frame.minY, middle.frame.minY)
+    app.terminate()
+    app.launch()
+    app.descendants(matching: .any).matching(identifier: "sidebar-history").firstMatch.click()
+    XCTAssertTrue(app.staticTexts["3 saved locally"].waitForExistence(timeout: 5))
+    XCTAssertLessThan(last.frame.minY, middle.frame.minY)
   }
 
   func testSortingUsesTheEntireCategoryAndSearchBeforePagination() {
@@ -112,8 +211,9 @@ import XCTest
     app.launchEnvironment["AETHER_UI_TESTING"] = "1"
     app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
     app.launch()
-    let potion = app.descendants(matching: .any)["entity-Item:1"]
-    let water = app.descendants(matching: .any)["entity-Item:3"]
+    let results = app.tables["entityResults"]
+    let potion = results.tableRows.containing(.any, identifier: "entity-Item:1").firstMatch
+    let water = results.tableRows.containing(.any, identifier: "entity-Item:3").firstMatch
     XCTAssertTrue(potion.waitForExistence(timeout: 10))
     XCTAssertTrue(water.waitForExistence(timeout: 5))
     // Icon, title, subtitle, empty space, level, and the row's vertical padding.
@@ -457,17 +557,41 @@ import XCTest
     XCTAssertTrue(recipe.waitForExistence(timeout: 5))
   }
   func testEmptySearchAndEscape() {
+    continueAfterFailure = false
     let app = XCUIApplication()
     app.launchEnvironment["AETHER_UI_TESTING"] = "1"
     app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
     app.launch()
     XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: 10))
+    XCTAssertTrue(app.descendants(matching: .any)["entity-Item:1"].waitForExistence(timeout: 5))
+    let heading = app.staticTexts["resultsHeading"]
+    let count = app.staticTexts["resultsCount"]
+    let top = heading.frame.minY
+    let bottom = count.frame.maxY
+    let sortRight = app.menuButtons["resultSort"].frame.maxX
     app.typeKey("f", modifierFlags: .command)
     app.searchFields.firstMatch.typeText("no-results")
     XCTAssertTrue(app.staticTexts["No matching entities"].waitForExistence(timeout: 5))
+    let screenshot = XCTAttachment(screenshot: app.screenshot())
+    screenshot.name = "Empty results column"
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+    XCTAssertEqual(heading.frame.minY, top, accuracy: 1)
+    XCTAssertEqual(count.frame.maxY, bottom, accuracy: 1)
+    XCTAssertEqual(app.menuButtons["resultSort"].frame.maxX, sortRight, accuracy: 1)
     app.typeKey(.escape, modifierFlags: [])
     XCTAssertEqual(app.searchFields.firstMatch.value as? String, "")
     XCTAssertTrue(app.descendants(matching: .any)["entity-Item:1"].waitForExistence(timeout: 5))
+    for (sidebar, message) in [
+      ("sidebar-favorites", "Keep your discoveries"),
+      ("sidebar-history", "Your journey starts here"),
+    ] {
+      app.descendants(matching: .any).matching(identifier: sidebar).firstMatch.click()
+      XCTAssertTrue(app.staticTexts[message].waitForExistence(timeout: 5))
+      XCTAssertEqual(heading.frame.minY, top, accuracy: 1)
+      XCTAssertEqual(count.frame.maxY, bottom, accuracy: 1)
+      XCTAssertEqual(app.menuButtons["resultSort"].frame.maxX, sortRight, accuracy: 1)
+    }
   }
   func testFormattedActionDescriptionIsNativeReadableText() {
     let app = XCUIApplication()

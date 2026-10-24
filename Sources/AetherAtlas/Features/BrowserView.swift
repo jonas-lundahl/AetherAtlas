@@ -3,8 +3,7 @@ import SwiftUI
 struct BrowserView: View {
   @Bindable var workspace: Workspace
   @FocusState private var searchFocused: Bool
-  @FocusState private var resultsFocused: Bool
-  @State private var savedSelection: EntityID?
+  @State private var selectionReset = 0
   @State private var sort: ResultSort = .original
   var body: some View {
     @Bindable var search = workspace.search
@@ -33,7 +32,6 @@ struct BrowserView: View {
     }
     .onChange(of: workspace.searchFocus) { searchFocused = true }
     .onChange(of: workspace.section) { _, section in
-      savedSelection = nil
       if case .category(let kind) = section {
         search.sort = sort
         search.kind = kind
@@ -50,8 +48,7 @@ struct BrowserView: View {
         searchFocused = false
       } else {
         workspace.navigation.close()
-        search.selection = nil
-        savedSelection = nil
+        selectionReset += 1
       }
     }
     .task {
@@ -120,20 +117,6 @@ struct BrowserView: View {
       ? workspace.library.snapshot.favorites : workspace.library.snapshot.history
   }
   private var isSaved: Bool { if case .category = workspace.section { false } else { true } }
-  private var resultSelection: Binding<EntityID?> {
-    Binding(
-      get: { isSaved ? savedSelection : workspace.search.selection },
-      set: { id in
-        if isSaved {
-          savedSelection = id
-        } else {
-          workspace.search.selection = id
-        }
-        if let entity = displayedEntries.first(where: { $0.id == id }) {
-          workspace.open(entity)
-        }
-      })
-  }
   private var displayedEntries: [EntitySummary] {
     isSaved ? sort.ordered(savedEntries, language: workspace.language) : workspace.search.entries
   }
@@ -143,6 +126,7 @@ struct BrowserView: View {
       HStack {
         VStack(alignment: .leading, spacing: 4) {
           Text(workspace.section.title).font(.title2.weight(.semibold))
+            .accessibilityIdentifier("resultsHeading")
           Text(
             isSaved
               ? "\(workspace.language.formatNumber(savedEntries.count)) saved locally"
@@ -177,6 +161,7 @@ struct BrowserView: View {
           } actions: {
             Button("Try Again") { workspace.search.retry() }
           }
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
           ContentUnavailableView(
             isSaved
@@ -187,50 +172,24 @@ struct BrowserView: View {
             description: Text(
               isSaved
                 ? "Open an entity\(workspace.section == .favorites ? " and choose the star to save it." : " to find it here later.")"
-                : "Try another name, select a category, or clear your search."))
+                : "Try another name, select a category, or clear your search.")
+          )
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
           if !isSaved && workspace.search.canLoadMore {
             Button("Browse Next Rows") { Task { await workspace.search.loadMore() } }.padding()
           }
         }
       } else {
-        List(selection: resultSelection) {
-          ForEach(displayedEntries) { entity in
-            ResultRow(
-              entity: entity, language: workspace.language, icons: workspace.icons,
-              favorite: workspace.library.isFavorite(entity.id)
-            )
-            .contentShape(Rectangle())
-            .tag(entity.id)
-            .accessibilityIdentifier("entity-\(entity.id.description)")
-            // A row gesture can open details without triggering native List selection.
-            .simultaneousGesture(
-              TapGesture().onEnded {
-                resultsFocused = true
-                resultSelection.wrappedValue = entity.id
-              }
-            )
-            .contextMenu {
-              Button("Open Details") { resultSelection.wrappedValue = entity.id }
-              Button(
-                workspace.library.isFavorite(entity.id) ? "Remove Favorite" : "Add Favorite",
-                systemImage: "star"
-              ) { Task { await workspace.library.toggle(entity) } }
-              Button("Copy Name") {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(entity.displayName, forType: .string)
-              }
-            }
-          }
-        }.listStyle(.inset).accessibilityIdentifier("entityResults")
-          .focused($resultsFocused)
-          .onKeyPress(.return) {
-            let id = resultSelection.wrappedValue
-            guard let entity = displayedEntries.first(where: { $0.id == id }) else {
-              return .ignored
-            }
-            workspace.open(entity)
-            return .handled
-          }
+        ResultsList(
+          entries: displayedEntries,
+          context: ResultsList.ContextID(
+            section: workspace.section, query: workspace.search.query, sort: sort,
+            language: workspace.language),
+          selectionReset: selectionReset,
+          language: workspace.language, icons: workspace.icons,
+          favorites: Set(workspace.library.snapshot.favorites.map(\.id)),
+          open: workspace.openResult,
+          toggleFavorite: { entity in Task { await workspace.library.toggle(entity) } })
         if let error = workspace.search.error, !isSaved {
           VStack(spacing: 5) {
             Text(error).font(.caption).foregroundStyle(.secondary)
@@ -244,6 +203,7 @@ struct BrowserView: View {
           "\(workspace.language.formatNumber(displayedEntries.count)) \(isSaved ? "entities" : "loaded")"
         ).font(.caption)
           .foregroundStyle(.secondary)
+          .accessibilityIdentifier("resultsCount")
         Spacer()
         if workspace.section == .history {
           Button("Clear History") { Task { await workspace.library.clearHistory() } }.font(.caption)
@@ -253,8 +213,10 @@ struct BrowserView: View {
           Button("Load More") { Task { await workspace.search.loadMore() } }.disabled(
             workspace.search.isLoadingMore)
         }
-      }.padding(10)
-    }.navigationTitle(workspace.section.title)
+      }.frame(minHeight: 28).padding(10)
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    .navigationTitle(workspace.section.title)
   }
 }
 

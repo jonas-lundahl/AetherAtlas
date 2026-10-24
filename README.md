@@ -15,9 +15,9 @@ A native macOS encyclopedia for Final Fantasy XIV, powered by **XIVAPI v2**. Ope
 - FFXIV text symbols use an optional **34 KB Lodestone font**, downloaded in the background at startup when no valid saved copy exists. The font stays in Application Support across launches and app updates, without expiry or refresh requests. Failed/offline downloads leave browsing usable with normal fonts; another attempt occurs on the next launch. No font installation is required and no game font is bundled.
 - Item → producing recipe → ingredient item navigation. Recipe discipline, level, yield, requirements, and crystals. Quest → named issuer navigation. Action descriptions and timings. NPC name/title details.
 - Quests have a dedicated journal layout: level/title, artwork capped at 180 points high with its aspect ratio preserved, EXP/gil and item rewards, selectable description, and ordered objectives. Expansion, location, and issuer links follow below. Result thumbnails use the available-to-begin quest marker (MSQ, sidequest, blue unlock, etc.); class/job quests use the silver **set 9** emblems. Artwork, game EXP/gil icons, and quest/job icons load on demand from XIVAPI.
-- Favorites and a deduplicated, most-recent-first history of the last 100 entities, saved across restarts. Names and summary metadata refresh when a saved entity is opened.
+- Favorites and a deduplicated, most-recent-first history of the last 100 entities, saved across restarts. Names and summary metadata refresh when a saved entity is opened outside Recently Viewed. Selecting, navigating with keys, or reopening a row in Recently Viewed previews it without recording another visit, so history order stays unchanged. Opening an entity from another list or a related detail link records a visit normally.
 - Bounded memory/disk response and icon caching, ETag revalidation, cancellation-safe shared downloads, and labeled stale responses during connection failures.
-- Native result selection, arrow-key navigation, Return to open, context menus, accessible button labels, and selectable detail text.
+- Native result selection with clicks, ↑/↓ or W/S navigation while the results have focus, Return to reopen, context menus, accessible button labels, and selectable detail text. Scrolling keeps the current selection; clicking a visible row selects and opens it without moving the viewport. Loading more results and favorite/detail updates preserve the viewport and selection by entity identity. Empty results and empty saved lists fill the column, keeping the heading and count bar in place.
 - **Aether Atlas → Check for Updates…** compares the installed version with the latest published GitHub release. A new version opens its release page for manual download and installation. The same command is available in Settings.
 
 ## Verified development environment
@@ -108,7 +108,7 @@ swift test -Xswiftc -strict-concurrency=complete
 python3 Scripts/test_update_game_data.py
 ```
 
-UI tests exercise search, empty states, Escape, mouse selection across row contents and empty space, arrow-key navigation, reopening a selected result, selection in sorted favorites and reordering history, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Number-formatting scenarios cover all four languages, a differing system locale, independent list/detail formatting, rewards, item values, crafting requirements, and decimal action timings. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
+Native list tests use 200 rows to check scroll preservation, selection identity through reordering/removal, keyboard boundaries, and exactly one activation per input. UI tests exercise mixed W/S/arrow navigation, scrolling then clicking far from the old selection, pagination without jumping, search-field typing, search, empty states, Escape, mouse selection across row contents and empty space, arrow-key navigation, reopening a selected result, selection in sorted favorites, history previews without reordering and normal visits from other lists, recipes, ingredients, back navigation, ⌘D, favorites after relaunch, native formatted action descriptions, quest journal reading order/reward navigation, and global/object language switching with default preference restoration. Number-formatting scenarios cover all four languages, a differing system locale, independent list/detail formatting, rewards, item values, crafting requirements, and decimal action timings. Test results are in `build/Logs/Test/*.xcresult`. See [verification notes](Docs/Verification.md) for observed results and limits.
 
 Bundled-index coverage checks descending pagination across gaps, omitted and unnamed localized rows, exhaustion without an API scan, version/schema pins on all game request types, the visible sidebar patch, highest-ID-first browsing/search, localized natural ordering, and name/level sorting before pagination. Generator tests use injected responses to verify multilingual filtering, fixed pins, stale-index detection without scanning, and preserving existing files on invalid data.
 
@@ -123,12 +123,14 @@ xcrun swift-format format --in-place --recursive Sources Tests Package.swift
 | Action | Shortcut |
 | --- | --- |
 | Focus search | ⌘F |
-| Select result | ↑ / ↓ in results list |
+| Select result | ↑ / ↓ or W / S in the focused results list |
 | Open selected result | Return |
 | Add/remove favorite | ⌘D |
 | Back / forward | ⌘[ / ⌘] |
 | Refresh results | ⌘R |
 | Clear search / dismiss focus / close detail | Escape, according to current focus |
+
+Clicking a result focuses the list, so ↑/↓ and W/S continue from that exact row. W/S remain ordinary text in the search field. Keyboard navigation reveals its selected row and stops at either end without wrapping. Clicking or pressing Return reopens the selected result after following a detail link. Changing category, query, language, or sort starts a new result context.
 
 The Navigate menu and detail toolbar expose the same actions. Clear History appears in Recently Viewed. Result context menus include Open Details, Add/Remove Favorite, and Copy Name.
 
@@ -140,7 +142,7 @@ The Navigate menu and detail toolbar expose the same actions. Clear History appe
 - `Sources/AetherCore/Features`: focused observable MainActor search/detail state and navigation history.
 - `Sources/AetherAtlas/App`: app composition, menus, windows, Debug-only test seam.
 - `Sources/AetherAtlas/Features`: sidebar/results, specialized entity sections, settings/attribution.
-- `Sources/AetherAtlas/SharedUI`: icons and a bounded decoded-image cache.
+- `Sources/AetherAtlas/SharedUI`: icons, a bounded decoded-image cache, and the native results table. The table owns selection, input, and scrolling; SwiftUI supplies data snapshots and explicit open/favorite actions. Search state owns fetching and pagination only. Snapshot restoration never opens details or scrolls to a previous selection.
 - `Tests`: deterministic core tests, captured v2 recipe/quest fixtures, and native UI tests.
 
 Core files compile both as a Swift package and directly in the Xcode app target; conditional imports let the same tests run through either tool. No package binary or third-party dependency is embedded. `Scripts/generate_project.py` can regenerate the checked-in conventional Xcode project after source-file additions. `Design/AppIcon/aether-atlas-master.png` is the simplified open-book/aether icon master, created with the built-in image generator; its final prompt is saved beside it. `Scripts/MakeAppIcon.swift` resizes the master into every macOS icon slot without adding a frame, border, or corner mask. Regenerate sizes with `swift Scripts/MakeAppIcon.swift`. No game artwork is bundled.

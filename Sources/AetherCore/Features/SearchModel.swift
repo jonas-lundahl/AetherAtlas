@@ -17,7 +17,6 @@ import Observation
   public private(set) var isStale = false
   public private(set) var next: String?
   public private(set) var after: Int?
-  public var selection: EntityID?
   @ObservationIgnored private let repository: any GameRepository
   @ObservationIgnored private let debounce: Duration
   @ObservationIgnored private var task: Task<Void, Never>?
@@ -52,7 +51,6 @@ import Observation
     next = nil
     after = nil
     error = nil
-    selection = nil
     isStale = false
     isLoading = true
     isLoadingMore = false
