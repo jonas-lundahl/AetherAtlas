@@ -100,6 +100,24 @@ actor FeatureRepository: GameRepository {
   try await eventually { !search.isLoading }
   #expect(search.entries.first?.id.kind == .recipe)
 }
+@Test @MainActor func paginationFailureKeepsRowsAndRetriesTheContinuation() async throws {
+  let repository = FeatureRepository()
+  let search = SearchModel(repository: repository, debounce: .zero)
+  search.query = "potion"
+  try await eventually { !search.isLoading }
+  let firstPage = search.entries
+  await repository.setFailure(true)
+  await search.loadMore()
+  #expect(search.entries == firstPage)
+  #expect(search.next == "page2")
+  #expect(search.error != nil)
+  #expect(!search.isLoadingMore)
+  await repository.setFailure(false)
+  await search.loadMore()
+  #expect(search.entries.map(\.id.row) == [1, 2])
+  #expect(search.error == nil)
+  #expect(!search.canLoadMore)
+}
 @Test @MainActor func navigationBackForwardBranchesAndSearchContext() {
   let navigation = EntityNavigation()
   let search = SearchModel(repository: FeatureRepository())

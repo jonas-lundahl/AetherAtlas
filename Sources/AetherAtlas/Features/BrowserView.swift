@@ -162,6 +162,12 @@ struct BrowserView: View {
             Button("Try Again") { workspace.search.retry() }
           }
           .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if !isSaved && workspace.search.canLoadMore {
+          ProgressView("Looking for more results…")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .task(id: workspace.search.next ?? workspace.search.after.map(String.init)) {
+              await workspace.search.loadMore()
+            }
         } else {
           ContentUnavailableView(
             isSaved
@@ -175,9 +181,6 @@ struct BrowserView: View {
                 : "Try another name, select a category, or clear your search.")
           )
           .frame(maxWidth: .infinity, maxHeight: .infinity)
-          if !isSaved && workspace.search.canLoadMore {
-            Button("Browse Next Rows") { Task { await workspace.search.loadMore() } }.padding()
-          }
         }
       } else {
         ResultsList(
@@ -189,12 +192,24 @@ struct BrowserView: View {
           language: workspace.language, icons: workspace.icons,
           favorites: Set(workspace.library.snapshot.favorites.map(\.id)),
           open: workspace.openResult,
-          toggleFavorite: { entity in Task { await workspace.library.toggle(entity) } })
-        if let error = workspace.search.error, !isSaved {
-          VStack(spacing: 5) {
-            Text(error).font(.caption).foregroundStyle(.secondary)
-            Button("Refresh Search") { workspace.search.retry() }.font(.caption)
-          }.padding(8)
+          toggleFavorite: { entity in Task { await workspace.library.toggle(entity) } },
+          loadMore: canAutomaticallyLoadMore
+            ? {
+              Task {
+                guard canAutomaticallyLoadMore else { return }
+                await workspace.search.loadMore()
+              }
+            } : nil
+        )
+        .overlay(alignment: .bottom) {
+          if let error = workspace.search.error, !isSaved {
+            VStack(spacing: 5) {
+              Text(error).font(.caption).foregroundStyle(.secondary)
+              Button("Retry Loading More") { Task { await workspace.search.loadMore() } }
+                .font(.caption).disabled(workspace.search.isLoadingMore)
+            }
+            .padding(8).frame(maxWidth: .infinity).background(.regularMaterial)
+          }
         }
       }
       Divider()
@@ -208,15 +223,18 @@ struct BrowserView: View {
         if workspace.section == .history {
           Button("Clear History") { Task { await workspace.library.clearHistory() } }.font(.caption)
         }
-        if !isSaved && workspace.search.canLoadMore {
-          if workspace.search.isLoadingMore { ProgressView().controlSize(.small) }
-          Button("Load More") { Task { await workspace.search.loadMore() } }.disabled(
-            workspace.search.isLoadingMore)
+        if !isSaved && workspace.search.isLoadingMore {
+          ProgressView().controlSize(.small).accessibilityLabel("Loading more results")
         }
       }.frame(minHeight: 28).padding(10)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .navigationTitle(workspace.section.title)
+  }
+
+  private var canAutomaticallyLoadMore: Bool {
+    !isSaved && workspace.search.canLoadMore && !workspace.search.isLoading
+      && !workspace.search.isLoadingMore && workspace.search.error == nil
   }
 }
 

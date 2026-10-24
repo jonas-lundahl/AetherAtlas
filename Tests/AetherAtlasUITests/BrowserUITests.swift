@@ -64,8 +64,7 @@ import XCTest
       "Item:\(id + 1)", name: String(format: "Fixture Item %03d", id + 1), in: app)
     app.typeKey(.downArrow, modifierFlags: [])
     assertSelectedResult("Item:\(id)", name: String(format: "Fixture Item %03d", id), in: app)
-    app.buttons["Load More"].click()
-    XCTAssertTrue(app.staticTexts["61 loaded"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
     XCTAssertEqual(row.frame.midY, position, accuracy: 2)
     row.click()
     app.typeKey(.return, modifierFlags: [])
@@ -146,7 +145,7 @@ import XCTest
     XCTAssertTrue(alphabetical.waitForExistence(timeout: 5))
     XCTAssertLessThan(alphabetical.frame.minY, highestLevel.frame.minY)
     XCTAssertTrue(app.staticTexts["50 loaded"].exists)
-    app.buttons["Load More"].click()
+    app.tables["entityResults"].scroll(byDeltaX: 0, deltaY: -10000)
     XCTAssertTrue(app.staticTexts["61 loaded"].waitForExistence(timeout: 5))
     sort("Level (highest first)")
     XCTAssertTrue(highestLevel.waitForExistence(timeout: 5))
@@ -157,12 +156,51 @@ import XCTest
     sort("Name")
     XCTAssertTrue(alphabetical.waitForExistence(timeout: 5))
     XCTAssertLessThan(alphabetical.frame.minY, highestLevel.frame.minY)
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    app.tables["entityResults"].scroll(byDeltaX: 0, deltaY: -10000)
+    XCTAssertTrue(app.staticTexts["61 loaded"].waitForExistence(timeout: 5))
     app.typeKey(.escape, modifierFlags: [])
     let picker = app.descendants(matching: .any).matching(identifier: "gameLanguagePicker")
       .firstMatch
     picker.radioButtons["🇩🇪"].click()
     XCTAssertTrue(newest.waitForExistence(timeout: 5))
     assertDisplayedText("Aal im Muster", in: newest)
+  }
+
+  func testInfiniteScrollPreservesSelectionAndRetriesWithoutDiscardingRows() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_SORTING"] = "1"
+    app.launchEnvironment["AETHER_UI_PAGINATION_FAILURE"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let results = app.tables["entityResults"]
+    let first = app.descendants(matching: .any)["entity-Item:61"]
+    XCTAssertTrue(first.waitForExistence(timeout: 10))
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    XCTAssertFalse(app.buttons["Load More"].exists)
+    first.click()
+    results.scroll(byDeltaX: 0, deltaY: -10000)
+    let retry = app.buttons["Retry Loading More"]
+    XCTAssertTrue(retry.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    let anchor = app.descendants(matching: .any)["entity-Item:12"]
+    XCTAssertTrue(anchor.exists)
+    let position = anchor.frame.midY
+    // Further scrolling leaves a failed page paused until explicitly retried.
+    results.scroll(byDeltaX: 0, deltaY: -100)
+    XCTAssertTrue(retry.exists)
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    retry.click()
+    XCTAssertTrue(app.staticTexts["61 loaded"].waitForExistence(timeout: 5))
+    XCTAssertEqual(anchor.frame.midY, position, accuracy: 2)
+    assertDisplayedText("Fixture Item 061", in: app.staticTexts["entityDetailName"])
+    XCTAssertEqual(results.tableRows.matching(NSPredicate(format: "selected == true")).count, 1)
+    XCTAssertFalse(retry.exists)
+    results.scroll(byDeltaX: 0, deltaY: -10000)
+    XCTAssertTrue(app.descendants(matching: .any)["entity-Item:1"].exists)
+    XCTAssertTrue(app.staticTexts["61 loaded"].exists)
   }
 
   func testUnavailableOptionalFontDoesNotBlockQuestBrowsing() {

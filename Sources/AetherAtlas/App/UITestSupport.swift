@@ -15,6 +15,7 @@
 
   /// Explicit Debug-only test seam. Release builds contain neither the fixtures nor this switch.
   struct UITestRepository: GameRepository {
+    private let pagination = UITestPagination()
     private func potionName(_ language: GameLanguage) -> String {
       switch language {
       case .english: "Fixture Potion"
@@ -92,13 +93,15 @@
           of: text, options: [.caseInsensitive, .diacriticInsensitive], locale: language.locale)
           != nil
       }
+      if cursor != nil { try await pagination.loadNextPage() }
       let page = page(entries, after: cursor.flatMap(Int.init))
       return EntityPage(entries: page.entries, next: page.after.map(String.init))
     }
     func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort)
       async throws -> EntityPage
     {
-      page(orderedEntries(kind: kind, language: language, sort: sort), after: after)
+      if after != nil { try await pagination.loadNextPage() }
+      return page(orderedEntries(kind: kind, language: language, sort: sort), after: after)
     }
     private func orderedEntries(kind: EntityKind, language: GameLanguage, sort: ResultSort)
       -> [EntitySummary]
@@ -201,6 +204,17 @@
         "sheet": .string("Item"), "row_id": .number(Double(row)),
         "fields": .object(["Name": .string(name)]),
       ])
+    }
+  }
+  private actor UITestPagination {
+    private var hasFailed = false
+
+    func loadNextPage() async throws {
+      try await Task.sleep(for: .milliseconds(250))
+      if ProcessInfo.processInfo.environment["AETHER_UI_PAGINATION_FAILURE"] == "1", !hasFailed {
+        hasFailed = true
+        throw URLError(.notConnectedToInternet)
+      }
     }
   }
 #endif

@@ -13,8 +13,8 @@
       (0..<count).map { EntitySummary(id: EntityID(kind: .item, row: $0), name: "Item \($0)") }
     }
 
-    private func makeTable() -> (ResultsTableView, NSScrollView) {
-      let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 400, height: 320))
+    private func makeTable() -> (ResultsTableView, ResultsScrollView) {
+      let scroll = ResultsScrollView(frame: NSRect(x: 0, y: 0, width: 400, height: 320))
       let table = ResultsTableView()
       scroll.documentView = table
       table.apply(
@@ -127,6 +127,72 @@
       #expect(table.selectedEntity == nil)
       #expect(scroll.contentView.bounds.origin.y == 0)
       #expect(opens == 2)
+    }
+
+    @Test func infiniteScrollWaitsUntilNearTheEndAndCoalescesEvents() async throws {
+      let (table, scroll) = makeTable()
+      var requests = 0
+      scroll.loadMore = { requests += 1 }
+      defer { scroll.loadMore = nil }
+      try await Task.sleep(for: .milliseconds(10))
+      #expect(requests == 0)
+      table.scrollRowToVisible(180)
+      try await Task.sleep(for: .milliseconds(10))
+      #expect(requests == 0)
+      // Keyboard navigation reveals the final row and uses the same trigger.
+      try key(13, characters: "w", in: table)
+      for _ in 0..<10 {
+        NotificationCenter.default.post(
+          name: NSView.boundsDidChangeNotification, object: scroll.contentView)
+      }
+      #expect(requests == 0)
+      try await eventually { requests == 1 }
+      #expect(table.selectedEntity?.id.row == 199)
+      let origin = scroll.contentView.bounds.origin
+      scroll.loadMore = nil
+      table.apply(
+        entries: entries(250), context: context, selectionReset: 0, presentation: presentation)
+      scroll.loadMore = { requests += 1 }
+      try await Task.sleep(for: .milliseconds(10))
+      #expect(requests == 1)
+      #expect(table.selectedEntity?.id.row == 199)
+      #expect(scroll.contentView.bounds.origin == origin)
+    }
+
+    @Test func infiniteScrollRechecksWhenTheViewportGrows() async throws {
+      let (table, scroll) = makeTable()
+      table.apply(
+        entries: entries(12), context: context, selectionReset: 0, presentation: presentation)
+      var requests = 0
+      scroll.loadMore = { requests += 1 }
+      defer { scroll.loadMore = nil }
+      try await Task.sleep(for: .milliseconds(10))
+      #expect(requests == 0)
+      scroll.setFrameSize(NSSize(width: 400, height: 640))
+      scroll.layoutSubtreeIfNeeded()
+      try await eventually { requests == 1 }
+    }
+
+    @Test func infiniteScrollFillsShortPagesAndHonorsDisabledAndRemovedCallbacks() async throws {
+      let (table, scroll) = makeTable()
+      table.apply(
+        entries: entries(2), context: context, selectionReset: 0, presentation: presentation)
+      var requests = 0
+      scroll.loadMore = { requests += 1 }
+      scroll.loadMore = nil
+      try await Task.sleep(for: .milliseconds(10))
+      #expect(requests == 0)
+      scroll.loadMore = { requests += 1 }
+      try await eventually { requests == 1 }
+      // Disabled callbacks cover requests in flight, exhaustion, errors, and saved lists.
+      scroll.loadMore = nil
+      scroll.setFrameSize(NSSize(width: 400, height: 640))
+      scroll.layoutSubtreeIfNeeded()
+      try await Task.sleep(for: .milliseconds(10))
+      #expect(requests == 1)
+      scroll.loadMore = { requests += 1 }
+      try await eventually { requests == 2 }
+      scroll.loadMore = nil
     }
 
     @Test func keyboardClampsAtTheEndsAndRevealsOnlyItsTarget() throws {

@@ -18,17 +18,18 @@ struct ResultsList: NSViewRepresentable {
   let favorites: Set<EntityID>
   let open: (EntitySummary) -> Void
   let toggleFavorite: (EntitySummary) -> Void
+  var loadMore: (() -> Void)? = nil
   @Environment(\.gameSymbolFont) private var symbolFont
 
-  func makeNSView(context: Context) -> NSScrollView {
-    let scroll = NSScrollView()
+  func makeNSView(context: Context) -> ResultsScrollView {
+    let scroll = ResultsScrollView()
     scroll.hasVerticalScroller = true
     scroll.drawsBackground = false
     scroll.documentView = ResultsTableView()
     return scroll
   }
 
-  func updateNSView(_ scroll: NSScrollView, context: Context) {
+  func updateNSView(_ scroll: ResultsScrollView, context: Context) {
     guard let table = scroll.documentView as? ResultsTableView else { return }
     table.open = open
     table.toggleFavorite = toggleFavorite
@@ -46,6 +47,59 @@ struct ResultsList: NSViewRepresentable {
       entries: entries, context: self.context, selectionReset: selectionReset,
       presentation: .init(
         language: language, favorites: favorites, hasSymbolFont: symbolFont != nil))
+    scroll.loadMore = loadMore
+  }
+
+  static func dismantleNSView(_ scroll: ResultsScrollView, coordinator: ()) {
+    scroll.loadMore = nil
+  }
+}
+
+/// Check after layout/snapshot updates, without publishing SwiftUI state during an update.
+final class ResultsScrollView: NSScrollView {
+  var loadMore: (() -> Void)? {
+    didSet {
+      if loadMore == nil {
+        paginationCheck?.cancel()
+        paginationCheck = nil
+      } else {
+        schedulePaginationCheck()
+      }
+    }
+  }
+  private var paginationCheck: Task<Void, Never>?
+
+  override init(frame: NSRect) {
+    super.init(frame: frame)
+    contentView.postsBoundsChangedNotifications = true
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(visibleBoundsChanged(_:)),
+      name: NSView.boundsDidChangeNotification, object: contentView)
+  }
+
+  required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+  override func layout() {
+    super.layout()
+    schedulePaginationCheck()
+  }
+
+  @objc private func visibleBoundsChanged(_ notification: Notification) {
+    schedulePaginationCheck()
+  }
+
+  private func schedulePaginationCheck() {
+    guard loadMore != nil, paginationCheck == nil else { return }
+    paginationCheck = Task { @MainActor [weak self] in
+      guard !Task.isCancelled, let self else { return }
+      self.paginationCheck = nil
+      guard let table = self.documentView as? ResultsTableView, !table.entries.isEmpty,
+        self.documentVisibleRect.height > 0
+      else { return }
+      let threshold = 5 * (table.rowHeight + table.intercellSpacing.height)
+      let bottom = table.rect(ofRow: table.entries.count - 1).maxY
+      if self.documentVisibleRect.maxY >= bottom - threshold { self.loadMore?() }
+    }
   }
 }
 

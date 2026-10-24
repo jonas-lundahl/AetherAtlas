@@ -226,3 +226,17 @@ Regenerated the bundled multilingual index from XIVAPI's latest **7.57x1** datas
 - **Documentation/diff:** README's current patch and resource size are updated; `git diff --check` passed. No application code, field mappings, or project structure changed. UI tests were not rerun for this resource-only update.
 
 The existing running app session had already loaded the preceding snapshot; a new launch is required to load the rebuilt bundle's new pins. Packaged-resource verification is not a runtime test of that new snapshot. No Release archive or published release was produced.
+
+## Infinite scrolling — 24 October 2026
+
+Replaced Load More with automatic pagination for category browsing and name searches. The native results scroll view checks its visible document rectangle after scrolling, resizing, and snapshot updates, requesting another page within five rows of the loaded end. Deferred, coalesced checks keep SwiftUI updates separate from loading state changes. Short pages can fill the viewport without another scroll, and empty intermediate pages advance automatically. Existing search request guards, cursor handling, full-category sorting, and selection/viewport restoration remain in use.
+
+The footer retains its count and shows an accessible loading indicator during pagination. Automatic requests pause while loading, after failures, at exhaustion, and in saved lists. A failed next page keeps the loaded rows and offers **Retry Loading More** for the same continuation. The error message overlays the results so showing or dismissing it does not resize the table or shift the viewport.
+
+- **Xcode/build:** all **84 core/native tests passed**, including threshold/coalescing checks, keyboard-driven scrolling, short pages, viewport resizing, disabled/removed callbacks, selection and viewport preservation, and retrying a failed continuation without discarding rows. Result: `build/Logs/Test/Test-AetherAtlas-2026.10.24_08-13-23-+0200.xcresult`.
+- **SwiftPM:** all **71 tests passed** with complete strict concurrency checking, including the new continuation-retry regression. Compiler/package caches used temporary directories.
+- **Native UI:** all **4 affected scenarios passed** against the final implementation: automatic browsing and search pagination with global sorting; retry after a simulated page failure, including pausing further automatic requests and preserving the visible row and selected detail; mouse/W/S/arrow navigation; and empty-result layout/Escape. Debug fixtures isolate files, preferences, artwork, and networking. Result: `build/Logs/Test/Test-AetherAtlas-UI-2026.10.24_08-13-39-+0200.xcresult`. The complete UI suite was not rerun.
+- **Live inspection:** relaunched the rebuilt Debug app with real patch 7.57x1 data. Scrolling the Items list automatically increased the count from **50 loaded** to **100 loaded**, without a Load More button. The dark-appearance screenshot confirmed the results layout and fixed footer; the updated app remains open for review.
+- **Formatting/docs:** changed Swift files pass strict swift-format lint, and `git diff --check` passes. README describes infinite scrolling and page retries. No files were added or moved, so project regeneration was unnecessary.
+
+Verified on macOS **26.6.2 / Apple Silicon**, Xcode **27.1**, and Swift **6.4**. No Release archive or published release was produced. Exact macOS 26.0, Intel runtime behavior, light appearance, and a full spoken VoiceOver audit were not checked during this pass.
