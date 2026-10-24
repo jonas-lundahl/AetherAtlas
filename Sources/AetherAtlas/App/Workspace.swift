@@ -6,6 +6,7 @@ import Observation
   let icons: IconStore
   let symbolFont: GameSymbolFontStore
   let search: SearchModel
+  let mapDetail: MapDetailModel
   let detail: DetailModel
   let library: LibraryModel
   let updates: AppUpdateModel
@@ -32,6 +33,29 @@ import Observation
   var objectLanguage: GameLanguage { objectLanguageOverride ?? language }
   var section: BrowserSection = .category(.item)
   var searchFocus = 0
+  var canGoBack: Bool { navigation.canBack }
+  var canGoForward: Bool { navigation.canForward }
+  var canToggleFavorite: Bool { navigation.current != nil }
+  func goBack() { if canGoBack { navigation.back() } }
+  func goForward() { if canGoForward { navigation.forward() } }
+  var loadedEntity: EntitySummary? {
+    guard let current = navigation.current else { return nil }
+    if current.id.kind == .map {
+      guard let map = mapDetail.map, map.id == current.id.row, !mapDetail.isLoading,
+        mapDetail.error == nil
+      else { return nil }
+      return map.summary
+    }
+    return detail.detail.flatMap { $0.entity.id == current.id ? $0.entity : nil }
+  }
+  func toggleCurrentFavorite() {
+    guard canToggleFavorite, let entity = loadedEntity ?? navigation.current else {
+      return
+    }
+    Task { await library.toggle(entity) }
+  }
+  func refreshResults() { search.retry() }
+
   init() {
     let fm = FileManager.default
     let support = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -41,6 +65,7 @@ import Observation
     cache = ResponseCache(client: XIVAPIClient(), directory: caches)
     var iconResponses = cache
     var repo: any GameRepository = LiveGameRepository(cache: cache)
+    var mapRepository: any MapRepository = LiveMapRepository(cache: cache)
     var libraryFile = support.appendingPathComponent("library.json")
     var symbolFontFile = support.appendingPathComponent("Fonts/FFXIV_Lodestone_SSF.ttf")
     var downloadSymbolFont: @Sendable () async throws -> Data = SymbolFontCache.download
@@ -51,6 +76,7 @@ import Observation
         || NSClassFromString("XCTestCase") != nil
       {
         repo = UITestRepository()
+        mapRepository = UITestMapRepository()
         releaseClient = UITestReleaseChecker()
         let session =
           ProcessInfo.processInfo.environment["AETHER_UI_TEST_SESSION"] ?? UUID().uuidString
@@ -74,6 +100,7 @@ import Observation
       preferences.string(forKey: "gameLanguage").flatMap(GameLanguage.init(rawValue:)) ?? .english
     self.language = language
     search = SearchModel(repository: repo, language: language)
+    mapDetail = MapDetailModel(repository: mapRepository)
     detail = DetailModel(repository: repo, language: language)
     library = LibraryModel(store: LibraryStore(file: libraryFile))
     updates = AppUpdateModel(
@@ -88,7 +115,7 @@ import Observation
     // Opening the same object elsewhere turns a history preview into a visit,
     // even when the already loaded details do not need another request.
     if wasPreview {
-      let summary = detail.detail.flatMap { $0.entity.id == entity.id ? $0.entity : nil } ?? entity
+      let summary = loadedEntity ?? entity
       Task { await library.record(summary) }
     }
   }

@@ -23,11 +23,18 @@ struct GameIcon: View {
     .accessibilityHidden(true)
     .task(id: path) {
       image = nil
-      guard let path, !path.isEmpty else { return }
-      do {
-        image = try await icons.image(path: path)
-      } catch {
-        // The entity remains readable with a native fallback symbol.
+      let fallback = kind == .map ? GameMap.fallbackThumbnailPath : nil
+      let candidates = [path, fallback].compactMap { $0 }.filter { !$0.isEmpty }
+      var seen = Set<String>()
+      for candidate in candidates where seen.insert(candidate).inserted {
+        do {
+          let value = try await icons.image(path: candidate)
+          try Task.checkCancellation()
+          if let value {
+            image = value
+            return
+          }
+        } catch { if Task.isCancelled { return } }
       }
     }
   }

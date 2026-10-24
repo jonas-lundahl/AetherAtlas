@@ -1,5 +1,22 @@
 import SwiftUI
 
+struct ObjectLanguageHeader: View {
+  @Binding var selection: GameLanguage
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack {
+        Text("Object language")
+        Spacer()
+        Text(selection.title).accessibilityIdentifier("objectLanguageName")
+      }.font(.caption).foregroundStyle(.secondary)
+      GameLanguagePicker(
+        label: "Object language", selection: $selection,
+        identifier: "objectLanguagePicker"
+      ).fixedSize()
+    }
+  }
+}
+
 /// AppKit provides a native tooltip for each segment, including emoji-only labels.
 struct GameLanguagePicker: NSViewRepresentable {
   let label: String

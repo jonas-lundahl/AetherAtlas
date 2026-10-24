@@ -1,6 +1,89 @@
 #if DEBUG
   import Foundation
 
+  struct UITestMapRepository: MapRepository {
+    private let pagination = UITestPagination()
+    static let artwork = Data(
+      base64Encoded:
+        "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAkCAYAAAA5DDySAAAAoklEQVR4nOXG4WYCAACF0e/p7pMkmSSTZCbJJJMkM8kkmUwvue57fD8OhwzW/2Zk2IiRUSNGXhoxMm7EyKQRI9NGjLw2YmTWiJF5I0YWjRh5a8TIeyNGlo0YWTViZN2IkY9GjGwaMbJtxMhnI0Z2jRjZN2Lk0IiRYyNGvhox8t2IkVMjRs6NGPlpxMilESPXRozcGjHy24iReyNG/hox8mjEnkNVvy18j3IdAAAAAElFTkSuQmCC"
+    )!
+    private func maps(language: GameLanguage) -> [GameMap] {
+      let names: [String]
+      switch language {
+      case .english: names = ["New Gridania", "Old Gridania"]
+      case .german: names = ["Neu-Gridania", "Alt-Gridania"]
+      case .french: names = ["Nouvelle Gridania", "Vieille Gridania"]
+      case .japanese: names = ["グリダニア：新市街", "グリダニア：旧市街"]
+      }
+      let count = ProcessInfo.processInfo.environment["AETHER_UI_MAP_PAGINATION"] == "1" ? 121 : 2
+      return (0..<count).map { offset in
+        let name = count == 2 ? names[offset] : String(format: "Fixture Map %03d", offset + 2)
+        return GameMap(
+          row: SheetRow(
+            rowID: offset + 2,
+            fields: [
+              "Id": .string("f1t\(offset + 1)/00"), "SizeFactor": .number(200),
+              "MapMarkerRange": .number(Double(offset + 3)),
+              "PlaceName": .object(["fields": .object(["Name": .string(name)])]),
+              "PlaceNameRegion": .object([
+                "fields": .object(["Name": .string("The Black Shroud")])
+              ]),
+              "TerritoryType": .object([
+                "fields": .object([
+                  "LoadingImage": .object([
+                    "value": .number(1), "fields": .object(["FileName": .string("fixture")]),
+                  ])
+                ])
+              ]),
+            ]))!
+      }
+    }
+    func page(text: String, after: Int?, language: GameLanguage, sort: ResultSort, refresh: Bool)
+      async throws -> MapPage
+    {
+      if after != nil { try await pagination.loadNextPage() }
+      let maps = maps(language: language).filter {
+        text.isEmpty
+          || "\($0.title) \($0.region) \($0.assetID) \($0.id)".localizedStandardContains(text)
+      }.sorted {
+        if sort == .original { return $0.id > $1.id }
+        return ResultSort.compare($0.title, $1.title, locale: language.locale) == .orderedAscending
+      }
+      let start = after.flatMap { id in maps.firstIndex { $0.id == id }.map { $0 + 1 } } ?? 0
+      let end = min(maps.count, start + 50)
+      return MapPage(
+        maps: Array(maps[start..<end]), after: end < maps.count ? maps[end - 1].id : nil,
+        isStale: false)
+    }
+    func mapDetail(id: Int, language: GameLanguage, refresh: Bool) async throws -> MapRecord {
+      guard let map = maps(language: language).first(where: { $0.id == id }) else {
+        throw APIError.invalidResponse
+      }
+      return MapRecord(map: map, isStale: false)
+    }
+    func content(for map: GameMap, language: GameLanguage, refresh: Bool) async throws -> MapContent
+    {
+      let rows = [
+        MapMarkerRow(
+          rowID: map.markerRange, subrowID: 0,
+          fields: [
+            "X": .number(1024), "Y": .number(1024),
+            "SubtextOrientation": .number(2),
+            "Icon": .object(["id": .number(60442)]),
+            "PlaceNameSubtext": .object(["fields": .object(["Name": .string("Fixture landmark")])]),
+          ]),
+        MapMarkerRow(
+          rowID: map.markerRange, subrowID: 1,
+          fields: [
+            "X": .number(1300), "Y": .number(1100), "Icon": .object(["id": .number(1)]),
+          ]),
+      ]
+      return MapContent(
+        image: Self.artwork, markers: rows.compactMap(GameMapMarker.init(row:)),
+        isStale: false, markerError: nil)
+    }
+  }
+
   struct UITestReleaseChecker: AppReleaseChecking {
     func latestRelease() async throws -> AppRelease {
       AppRelease(tag: "20991231.2359")!
@@ -9,12 +92,21 @@
 
   struct UITestIconTransport: HTTPTransport {
     func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+      let path = request.url.flatMap { URLComponents(url: $0, resolvingAgainstBaseURL: false) }?
+        .queryItems?.first { $0.name == "path" }?.value
+      if path == "ui/loadingimage/fixture_hr1.tex" || path == "ui/icon/060000/060442_hr1.tex" {
+        return (
+          UITestMapRepository.artwork,
+          HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+        )
+      }
       throw URLError(.resourceUnavailable)
     }
   }
 
   /// Explicit Debug-only test seam. Release builds contain neither the fixtures nor this switch.
   struct UITestRepository: GameRepository {
+    private let maps = UITestMapRepository()
     private let pagination = UITestPagination()
     private func potionName(_ language: GameLanguage) -> String {
       switch language {
@@ -88,6 +180,12 @@
     )
       async throws -> EntityPage
     {
+      if kind == .map {
+        let page = try await maps.page(
+          text: text, after: cursor.flatMap(Int.init), language: language, sort: sort,
+          refresh: false)
+        return EntityPage(entries: page.maps.map(\.summary), next: page.after.map(String.init))
+      }
       let entries = orderedEntries(kind: kind, language: language, sort: sort).filter {
         $0.name.range(
           of: text, options: [.caseInsensitive, .diacriticInsensitive], locale: language.locale)
@@ -100,6 +198,11 @@
     func browse(kind: EntityKind, after: Int?, language: GameLanguage, sort: ResultSort)
       async throws -> EntityPage
     {
+      if kind == .map {
+        let page = try await maps.page(
+          text: "", after: after, language: language, sort: sort, refresh: false)
+        return EntityPage(entries: page.maps.map(\.summary), after: page.after)
+      }
       if after != nil { try await pagination.loadNextPage() }
       return page(orderedEntries(kind: kind, language: language, sort: sort), after: after)
     }

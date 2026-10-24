@@ -29,16 +29,20 @@ public struct GameDataIndex: Decodable, Sendable {
     public let ids: [Int]
     public let levels: [Int]?
     public let names: [String: [String]]
+    public let searchTerms: [String: [String]]?
 
-    public init(ids: [Int], levels: [Int]?, names: [String: [String]]) {
+    public init(
+      ids: [Int], levels: [Int]?, names: [String: [String]], searchTerms: [String: [String]]? = nil
+    ) {
       self.ids = ids
       self.levels = levels
       self.names = names
+      self.searchTerms = searchTerms
     }
   }
   private let rows: [String: Sheet]
 
-  public init(snapshot: GameDataSnapshot, rows: [String: Sheet], formatVersion: Int = 2) throws {
+  public init(snapshot: GameDataSnapshot, rows: [String: Sheet], formatVersion: Int = 3) throws {
     self.formatVersion = formatVersion
     self.snapshot = snapshot
     self.rows = rows
@@ -69,7 +73,7 @@ public struct GameDataIndex: Decodable, Sendable {
   }()
 
   private func validate() throws {
-    guard formatVersion == 2,
+    guard formatVersion == 3,
       snapshot.version.range(of: #"^[a-f0-9]{16}$"#, options: .regularExpression) != nil,
       snapshot.schema.range(
         of: #"^exdschema@2:rev:[a-f0-9]{40}$"#, options: .regularExpression) != nil,
@@ -90,7 +94,14 @@ public struct GameDataIndex: Decodable, Sendable {
           sheet.names.values.contains { $0[i].contains { !$0.isWhitespace } }
         })
       else { throw GameDataIndexError.invalidBundle }
-      if kind == EntityKind.npc.rawValue {
+      if kind == "Map" {
+        guard sheet.levels == nil, let terms = sheet.searchTerms,
+          Set(terms.keys) == languages,
+          terms.values.allSatisfy({ values in
+            values.count == ids.count && values.allSatisfy { $0.utf8.count <= 16_384 }
+          })
+        else { throw GameDataIndexError.invalidBundle }
+      } else if kind == EntityKind.npc.rawValue {
         guard sheet.levels == nil else { throw GameDataIndexError.invalidBundle }
       } else {
         guard let levels = sheet.levels, levels.count == ids.count,
@@ -116,9 +127,10 @@ public struct GameDataIndex: Decodable, Sendable {
       let name = names[offset]
       guard name.contains(where: { !$0.isWhitespace }) else { continue }
       if query.isEmpty
-        || name.precomposedStringWithCompatibilityMapping.range(
-          of: query, options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
-          locale: locale) != nil
+        || (sheet.searchTerms?[language.rawValue]?[offset] ?? name)
+          .precomposedStringWithCompatibilityMapping.range(
+            of: query, options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
+            locale: locale) != nil
       {
         offsets.append(offset)
       }

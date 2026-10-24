@@ -45,7 +45,7 @@ struct QuestJournalView: View {
 
       VStack(alignment: .leading, spacing: 20) {
         if let path = detail.row["Icon"].iconPath {
-          QuestBanner(path: path, icons: icons)
+          GameArtworkBanner(path: path, icons: icons)
         }
         journalSection("Reward", symbol: "shippingbox.circle.fill") {
           rewards
@@ -188,41 +188,6 @@ struct QuestJournalView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Open \(entity.displayName), Item")
-      }
-    }
-  }
-}
-
-private struct QuestBanner: View {
-  let path: String
-  let icons: IconStore
-  @State private var image: NSImage?
-  @State private var failed = false
-
-  var body: some View {
-    Group {
-      if let image {
-        Image(nsImage: image).resizable().interpolation(.high).scaledToFit()
-          .frame(maxHeight: 180)
-          .clipShape(RoundedRectangle(cornerRadius: 4))
-      } else if !failed {
-        Rectangle().fill(.primary.opacity(0.04)).aspectRatio(3.2, contentMode: .fit)
-          .frame(maxHeight: 180)
-          .overlay { ProgressView().controlSize(.small) }
-      }
-    }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .accessibilityHidden(true)
-    .task(id: path) {
-      image = nil
-      failed = false
-      do {
-        let result = try await icons.image(path: path)
-        try Task.checkCancellation()
-        image = result
-        failed = result == nil
-      } catch {
-        if !Task.isCancelled { failed = true }
       }
     }
   }

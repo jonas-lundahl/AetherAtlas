@@ -76,6 +76,11 @@ public struct LiveGameRepository: GameRepository {
   private func indexedPage(
     kind: EntityKind, text: String, before: Int?, language: GameLanguage, sort: ResultSort
   ) async throws -> EntityPage {
+    if kind == .map {
+      let page = try await LiveMapRepository(cache: cache, index: index).page(
+        text: text, after: before, language: language, sort: sort, refresh: false)
+      return EntityPage(entries: page.maps.map(\.summary), after: page.after, isStale: page.isStale)
+    }
     let ids = try await queries.ids(kind: kind, language: language, sort: sort, text: text)
     var offset = 0
     if let before {

@@ -1,0 +1,426 @@
+{
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "version": "0874aee069e1e7c4",
+  "rows": [
+    {
+      "row_id": 0,
+      "fields": {
+        "Id": "",
+        "MapMarkerRange": 0,
+        "PlaceName": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 0
+        },
+        "SizeFactor": 100
+      }
+    },
+    {
+      "row_id": 1,
+      "fields": {
+        "Id": "default/00",
+        "MapMarkerRange": 0,
+        "PlaceName": {
+          "value": 21,
+          "sheet": "PlaceName",
+          "row_id": 21,
+          "fields": {
+            "Name": "Eorzea"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 2405,
+          "sheet": "PlaceName",
+          "row_id": 2405,
+          "fields": {
+            "Name": "???"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 1,
+          "sheet": "TerritoryType",
+          "row_id": 1,
+          "fields": {
+            "Aetheryte": {
+              "value": 0,
+              "sheet": "Aetheryte",
+              "row_id": 0,
+              "fields": {
+                "AethernetGroup": 0
+              }
+            },
+            "LoadingImage": {
+              "value": 0,
+              "sheet": "LoadingImage",
+              "row_id": 0,
+              "fields": {
+                "FileName": ""
+              }
+            }
+          }
+        },
+        "SizeFactor": 100
+      }
+    },
+    {
+      "row_id": 2,
+      "fields": {
+        "Id": "f1t1/00",
+        "MapMarkerRange": 3,
+        "PlaceName": {
+          "value": 52,
+          "sheet": "PlaceName",
+          "row_id": 52,
+          "fields": {
+            "Name": "New Gridania"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 23,
+          "sheet": "PlaceName",
+          "row_id": 23,
+          "fields": {
+            "Name": "The Black Shroud"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 132,
+          "sheet": "TerritoryType",
+          "row_id": 132,
+          "fields": {
+            "Aetheryte": {
+              "value": 2,
+              "sheet": "Aetheryte",
+              "row_id": 2,
+              "fields": {
+                "AethernetGroup": 2
+              }
+            },
+            "LoadingImage": {
+              "value": 3,
+              "sheet": "LoadingImage",
+              "row_id": 3,
+              "fields": {
+                "FileName": "-nowloading_base"
+              }
+            }
+          }
+        },
+        "SizeFactor": 200
+      }
+    },
+    {
+      "row_id": 3,
+      "fields": {
+        "Id": "f1t2/00",
+        "MapMarkerRange": 4,
+        "PlaceName": {
+          "value": 53,
+          "sheet": "PlaceName",
+          "row_id": 53,
+          "fields": {
+            "Name": "Old Gridania"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 23,
+          "sheet": "PlaceName",
+          "row_id": 23,
+          "fields": {
+            "Name": "The Black Shroud"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 133,
+          "sheet": "TerritoryType",
+          "row_id": 133,
+          "fields": {
+            "Aetheryte": {
+              "value": 2,
+              "sheet": "Aetheryte",
+              "row_id": 2,
+              "fields": {
+                "AethernetGroup": 2
+              }
+            },
+            "LoadingImage": {
+              "value": 3,
+              "sheet": "LoadingImage",
+              "row_id": 3,
+              "fields": {
+                "FileName": "-nowloading_base"
+              }
+            }
+          }
+        },
+        "SizeFactor": 200
+      }
+    },
+    {
+      "row_id": 4,
+      "fields": {
+        "Id": "f1f1/00",
+        "MapMarkerRange": 5,
+        "PlaceName": {
+          "value": 54,
+          "sheet": "PlaceName",
+          "row_id": 54,
+          "fields": {
+            "Name": "Central Shroud"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 23,
+          "sheet": "PlaceName",
+          "row_id": 23,
+          "fields": {
+            "Name": "The Black Shroud"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 148,
+          "sheet": "TerritoryType",
+          "row_id": 148,
+          "fields": {
+            "Aetheryte": {
+              "value": 3,
+              "sheet": "Aetheryte",
+              "row_id": 3,
+              "fields": {
+                "AethernetGroup": 0
+              }
+            },
+            "LoadingImage": {
+              "value": 3,
+              "sheet": "LoadingImage",
+              "row_id": 3,
+              "fields": {
+                "FileName": "-nowloading_base"
+              }
+            }
+          }
+        },
+        "SizeFactor": 100
+      }
+    },
+    {
+      "row_id": 5,
+      "fields": {
+        "Id": "f1f2/00",
+        "MapMarkerRange": 6,
+        "PlaceName": {
+          "value": 55,
+          "sheet": "PlaceName",
+          "row_id": 55,
+          "fields": {
+            "Name": "East Shroud"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 23,
+          "sheet": "PlaceName",
+          "row_id": 23,
+          "fields": {
+            "Name": "The Black Shroud"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 152,
+          "sheet": "TerritoryType",
+          "row_id": 152,
+          "fields": {
+            "Aetheryte": {
+              "value": 4,
+              "sheet": "Aetheryte",
+              "row_id": 4,
+              "fields": {
+                "AethernetGroup": 0
+              }
+            },
+            "LoadingImage": {
+              "value": 3,
+              "sheet": "LoadingImage",
+              "row_id": 3,
+              "fields": {
+                "FileName": "-nowloading_base"
+              }
+            }
+          }
+        },
+        "SizeFactor": 100
+      }
+    },
+    {
+      "row_id": 6,
+      "fields": {
+        "Id": "f1f3/00",
+        "MapMarkerRange": 7,
+        "PlaceName": {
+          "value": 56,
+          "sheet": "PlaceName",
+          "row_id": 56,
+          "fields": {
+            "Name": "South Shroud"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 23,
+          "sheet": "PlaceName",
+          "row_id": 23,
+          "fields": {
+            "Name": "The Black Shroud"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 153,
+          "sheet": "TerritoryType",
+          "row_id": 153,
+          "fields": {
+            "Aetheryte": {
+              "value": 5,
+              "sheet": "Aetheryte",
+              "row_id": 5,
+              "fields": {
+                "AethernetGroup": 0
+              }
+            },
+            "LoadingImage": {
+              "value": 3,
+              "sheet": "LoadingImage",
+              "row_id": 3,
+              "fields": {
+                "FileName": "-nowloading_base"
+              }
+            }
+          }
+        },
+        "SizeFactor": 100
+      }
+    },
+    {
+      "row_id": 7,
+      "fields": {
+        "Id": "f1f4/00",
+        "MapMarkerRange": 8,
+        "PlaceName": {
+          "value": 57,
+          "sheet": "PlaceName",
+          "row_id": 57,
+          "fields": {
+            "Name": "North Shroud"
+          }
+        },
+        "PlaceNameRegion": {
+          "value": 23,
+          "sheet": "PlaceName",
+          "row_id": 23,
+          "fields": {
+            "Name": "The Black Shroud"
+          }
+        },
+        "PlaceNameSub": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "TerritoryType": {
+          "value": 154,
+          "sheet": "TerritoryType",
+          "row_id": 154,
+          "fields": {
+            "Aetheryte": {
+              "value": 7,
+              "sheet": "Aetheryte",
+              "row_id": 7,
+              "fields": {
+                "AethernetGroup": 0
+              }
+            },
+            "LoadingImage": {
+              "value": 3,
+              "sheet": "LoadingImage",
+              "row_id": 3,
+              "fields": {
+                "FileName": "-nowloading_base"
+              }
+            }
+          }
+        },
+        "SizeFactor": 100
+      }
+    }
+  ]
+}

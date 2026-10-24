@@ -33,6 +33,7 @@ struct BrowserView: View {
     .onChange(of: workspace.searchFocus) { searchFocused = true }
     .onChange(of: workspace.section) { _, section in
       if case .category(let kind) = section {
+        if !kind.sorts.contains(sort) { sort = .original }
         search.sort = sort
         search.kind = kind
       }
@@ -138,7 +139,9 @@ struct BrowserView: View {
         Spacer()
         Menu {
           Picker("Sort results", selection: $sort) {
-            ForEach(ResultSort.allCases) { Text($0.rawValue).tag($0) }
+            ForEach(isSaved ? ResultSort.allCases : workspace.search.kind.sorts) {
+              Text($0 == .original && !isSaved ? "ID (highest first)" : $0.rawValue).tag($0)
+            }
           }
         } label: {
           Image(systemName: "arrow.up.arrow.down")

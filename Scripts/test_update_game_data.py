@@ -18,9 +18,13 @@ def fixture_index():
         rows[sheet] = {"ids": [4, 3, 1], "names": {
             "en": ["", "", "English name"], "de": ["", "", ""],
             "fr": ["Nom français", "", ""], "ja": ["", "日本語", ""]}}
+        if sheet == "Map":
+            rows[sheet]["searchTerms"] = {
+                lang: [f"{name} Region f1t1/00 {row}" for name, row in zip(names, [4, 3, 1])]
+                for lang, names in rows[sheet]["names"].items()}
         if sheet in builder.LEVELS:
             rows[sheet]["levels"] = [40, 30, 10]
-    return {"formatVersion": 2, "snapshot": SNAPSHOT.copy(), "rows": rows}
+    return {"formatVersion": 3, "snapshot": SNAPSHOT.copy(), "rows": rows}
 
 
 
@@ -47,6 +51,10 @@ class GeneratorTests(unittest.TestCase):
             if row == 4:
                 names[f"{leaf}@lang(fr)"] = "Nom français"
             fields = {"ItemResult": {"fields": names}} if sheet == "Recipe" else names
+            if sheet == "Map":
+                fields = {"Id": "f1t1/00", "PlaceName": {"fields": names},
+                          "PlaceNameSub": {"fields": {f"Name@lang({lang})": "" for lang in builder.LANGUAGES}},
+                          "PlaceNameRegion": {"fields": {f"Name@lang({lang})": "Region" for lang in builder.LANGUAGES}}}
             if sheet == "Item":
                 fields["LevelItem@as(raw)"] = row * 10
             elif sheet == "Recipe":
@@ -63,7 +71,7 @@ class GeneratorTests(unittest.TestCase):
             result = builder.build(get=self.get)
         self.assertEqual(result, fixture_index())
         pages = [parameters for _, parameters in self.calls if parameters and parameters["fields"]]
-        self.assertEqual(len(pages), 15)
+        self.assertEqual(len(pages), 18)
         for parameters in pages:
             self.assertEqual(parameters["version"], SNAPSHOT["version"])
             self.assertEqual(parameters["schema"], SNAPSHOT["schema"])
@@ -76,6 +84,32 @@ class GeneratorTests(unittest.TestCase):
                              ("levels", [-1, 0, 0])]:
             invalid = copy.deepcopy(fixture_index())
             invalid["rows"]["Item"][field] = value
+            with self.assertRaises(ValueError):
+                builder.validate(invalid)
+
+    def test_format_two_upgrades_to_maps_and_map_titles_include_floors(self):
+        legacy = fixture_index()
+        legacy["formatVersion"] = 2
+        del legacy["rows"]["Map"]
+        self.assertEqual(builder.build(legacy, get=self.get), fixture_index())
+
+        def map_rows(path, parameters):
+            page = self.get(path, parameters)
+            for row in page["rows"]:
+                if row["row_id"] == 4:
+                    row["fields"]["Id"] = "../00"
+                for lang in builder.LANGUAGES:
+                    row["fields"]["PlaceNameSub"]["fields"][f"Name@lang({lang})"] = "Upper Floor"
+            return page
+
+        maps = builder.build_sheet("Map", SNAPSHOT, map_rows)
+        self.assertEqual(maps["ids"], [3, 1])
+        self.assertEqual(maps["names"]["en"], ["", "English name · Upper Floor"])
+        self.assertEqual(maps["names"]["ja"], ["日本語 · Upper Floor", ""])
+        self.assertIn("Upper Floor Region f1t1/00 1", maps["searchTerms"]["en"][1])
+        for terms in ({"en": ["bad"]}, {lang: [] for lang in builder.LANGUAGES}):
+            invalid = fixture_index()
+            invalid["rows"]["Map"]["searchTerms"] = terms
             with self.assertRaises(ValueError):
                 builder.validate(invalid)
 

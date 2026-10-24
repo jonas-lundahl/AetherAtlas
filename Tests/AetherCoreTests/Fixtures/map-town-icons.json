@@ -1,0 +1,182 @@
+{
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "version": "0874aee069e1e7c4",
+  "rows": [
+    {
+      "row_id": 0,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": "Nowheresville"
+      }
+    },
+    {
+      "row_id": 1,
+      "fields": {
+        "Icon": {
+          "id": 60881,
+          "path": "ui/icon/060000/060881.tex",
+          "path_hr1": "ui/icon/060000/060881_hr1.tex"
+        },
+        "Name": "Limsa Lominsa"
+      }
+    },
+    {
+      "row_id": 2,
+      "fields": {
+        "Icon": {
+          "id": 60882,
+          "path": "ui/icon/060000/060882.tex",
+          "path_hr1": "ui/icon/060000/060882_hr1.tex"
+        },
+        "Name": "Gridania"
+      }
+    },
+    {
+      "row_id": 3,
+      "fields": {
+        "Icon": {
+          "id": 60883,
+          "path": "ui/icon/060000/060883.tex",
+          "path_hr1": "ui/icon/060000/060883_hr1.tex"
+        },
+        "Name": "Ul'dah"
+      }
+    },
+    {
+      "row_id": 4,
+      "fields": {
+        "Icon": {
+          "id": 60884,
+          "path": "ui/icon/060000/060884.tex",
+          "path_hr1": "ui/icon/060000/060884_hr1.tex"
+        },
+        "Name": "Ishgard"
+      }
+    },
+    {
+      "row_id": 5,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    },
+    {
+      "row_id": 6,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    },
+    {
+      "row_id": 7,
+      "fields": {
+        "Icon": {
+          "id": 60885,
+          "path": "ui/icon/060000/060885.tex",
+          "path_hr1": "ui/icon/060000/060885_hr1.tex"
+        },
+        "Name": "Kugane"
+      }
+    },
+    {
+      "row_id": 8,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    },
+    {
+      "row_id": 9,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    },
+    {
+      "row_id": 10,
+      "fields": {
+        "Icon": {
+          "id": 60886,
+          "path": "ui/icon/060000/060886.tex",
+          "path_hr1": "ui/icon/060000/060886_hr1.tex"
+        },
+        "Name": "Crystarium"
+      }
+    },
+    {
+      "row_id": 11,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    },
+    {
+      "row_id": 12,
+      "fields": {
+        "Icon": {
+          "id": 60887,
+          "path": "ui/icon/060000/060887.tex",
+          "path_hr1": "ui/icon/060000/060887_hr1.tex"
+        },
+        "Name": "Old Sharlayan"
+      }
+    },
+    {
+      "row_id": 13,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    },
+    {
+      "row_id": 14,
+      "fields": {
+        "Icon": {
+          "id": 60888,
+          "path": "ui/icon/060000/060888.tex",
+          "path_hr1": "ui/icon/060000/060888_hr1.tex"
+        },
+        "Name": "Tuliyollal"
+      }
+    },
+    {
+      "row_id": 15,
+      "fields": {
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "Name": ""
+      }
+    }
+  ]
+}

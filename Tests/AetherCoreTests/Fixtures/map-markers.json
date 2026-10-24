@@ -1,0 +1,1062 @@
+{
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "version": "0874aee069e1e7c4",
+  "rows": [
+    {
+      "row_id": 3,
+      "subrow_id": 0,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60436,
+          "path": "ui/icon/060000/060436.tex",
+          "path_hr1": "ui/icon/060000/060436_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 548,
+          "sheet": "PlaceName",
+          "row_id": 548,
+          "fields": {
+            "Name": "The Roost"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1078,
+        "Y": 1222
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 1,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60314,
+          "path": "ui/icon/060000/060314.tex",
+          "path_hr1": "ui/icon/060000/060314_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 547,
+          "sheet": "PlaceName",
+          "row_id": 547,
+          "fields": {
+            "Name": "Carline Canopy\n(Adventurers' Guild)"
+          }
+        },
+        "SubtextOrientation": 3,
+        "Type": 0,
+        "X": 1078,
+        "Y": 1260
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 2,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60352,
+          "path": "ui/icon/060000/060352.tex",
+          "path_hr1": "ui/icon/060000/060352_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 549,
+          "sheet": "PlaceName",
+          "row_id": 549,
+          "fields": {
+            "Name": "Airship Landing"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 1035,
+        "Y": 1280
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 3,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 551,
+          "sheet": "PlaceName",
+          "row_id": 551,
+          "fields": {
+            "Name": "The Knot"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 1025,
+        "Y": 1058
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 4,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 552,
+          "sheet": "PlaceName",
+          "row_id": 552,
+          "fields": {
+            "Name": "Blue Badger Gate"
+          }
+        },
+        "SubtextOrientation": 4,
+        "Type": 0,
+        "X": 1326,
+        "Y": 1329
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 5,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60321,
+          "path": "ui/icon/060000/060321.tex",
+          "path_hr1": "ui/icon/060000/060321_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 554,
+          "sheet": "PlaceName",
+          "row_id": 554,
+          "fields": {
+            "Name": "Carpenters' Guild"
+          }
+        },
+        "SubtextOrientation": 4,
+        "Type": 0,
+        "X": 948,
+        "Y": 1130
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 6,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 556,
+          "sheet": "PlaceName",
+          "row_id": 556,
+          "fields": {
+            "Name": "Figaga's Gift"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 1010,
+        "Y": 1205
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 7,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 557,
+          "sheet": "PlaceName",
+          "row_id": 557,
+          "fields": {
+            "Name": "Acorn Orchard"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 878,
+        "Y": 1130
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 8,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 559,
+          "sheet": "PlaceName",
+          "row_id": 559,
+          "fields": {
+            "Name": "White Wolf Gate"
+          }
+        },
+        "SubtextOrientation": 4,
+        "Type": 0,
+        "X": 813,
+        "Y": 1199
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 9,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 560,
+          "sheet": "PlaceName",
+          "row_id": 560,
+          "fields": {
+            "Name": "Red Otter Gate"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 985,
+        "Y": 1238
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 10,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60320,
+          "path": "ui/icon/060000/060320.tex",
+          "path_hr1": "ui/icon/060000/060320_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 563,
+          "sheet": "PlaceName",
+          "row_id": 563,
+          "fields": {
+            "Name": "Quiver's Hold\n(Archers' Guild)"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1460,
+        "Y": 1102
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 11,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 585,
+          "sheet": "PlaceName",
+          "row_id": 585,
+          "fields": {
+            "Name": "Black Tea Brook"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 950,
+        "Y": 925
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 12,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 587,
+          "sheet": "PlaceName",
+          "row_id": 587,
+          "fields": {
+            "Name": "Jadeite Flood"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 935,
+        "Y": 1315
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 13,
+      "fields": {
+        "DataType": 3,
+        "Icon": {
+          "id": 60453,
+          "path": "ui/icon/060000/060453.tex",
+          "path_hr1": "ui/icon/060000/060453_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 590,
+          "sheet": "PlaceName",
+          "row_id": 590,
+          "fields": {
+            "Name": "Gridania Aetheryte Plaza"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1094,
+        "Y": 1080
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 14,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60568,
+          "path": "ui/icon/060000/060568.tex",
+          "path_hr1": "ui/icon/060000/060568_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 591,
+          "sheet": "PlaceName",
+          "row_id": 591,
+          "fields": {
+            "Name": "Adders' Nest"
+          }
+        },
+        "SubtextOrientation": 4,
+        "Type": 0,
+        "X": 886,
+        "Y": 1010
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 15,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60311,
+          "path": "ui/icon/060000/060311.tex",
+          "path_hr1": "ui/icon/060000/060311_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 593,
+          "sheet": "PlaceName",
+          "row_id": 593,
+          "fields": {
+            "Name": "Chocobokeep"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1085,
+        "Y": 1160
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 16,
+      "fields": {
+        "DataType": 1,
+        "Icon": {
+          "id": 60441,
+          "path": "ui/icon/060000/060441.tex",
+          "path_hr1": "ui/icon/060000/060441_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 53,
+          "sheet": "PlaceName",
+          "row_id": 53,
+          "fields": {
+            "Name": "Old Gridania"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1225,
+        "Y": 1054
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 17,
+      "fields": {
+        "DataType": 1,
+        "Icon": {
+          "id": 60441,
+          "path": "ui/icon/060000/060441.tex",
+          "path_hr1": "ui/icon/060000/060441_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 53,
+          "sheet": "PlaceName",
+          "row_id": 53,
+          "fields": {
+            "Name": "Old Gridania"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1046,
+        "Y": 998
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 18,
+      "fields": {
+        "DataType": 1,
+        "Icon": {
+          "id": 60441,
+          "path": "ui/icon/060000/060441.tex",
+          "path_hr1": "ui/icon/060000/060441_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 53,
+          "sheet": "PlaceName",
+          "row_id": 53,
+          "fields": {
+            "Name": "Old Gridania"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 815,
+        "Y": 1044
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 19,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 54,
+          "sheet": "PlaceName",
+          "row_id": 54,
+          "fields": {
+            "Name": "Central Shroud"
+          }
+        },
+        "SubtextOrientation": 0,
+        "Type": 0,
+        "X": 792,
+        "Y": 1211
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 20,
+      "fields": {
+        "DataType": 1,
+        "Icon": {
+          "id": 60441,
+          "path": "ui/icon/060000/060441.tex",
+          "path_hr1": "ui/icon/060000/060441_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 54,
+          "sheet": "PlaceName",
+          "row_id": 54,
+          "fields": {
+            "Name": "Central Shroud"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1364,
+        "Y": 1348
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 21,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 54,
+          "sheet": "PlaceName",
+          "row_id": 54,
+          "fields": {
+            "Name": "Central Shroud"
+          }
+        },
+        "SubtextOrientation": 0,
+        "Type": 0,
+        "X": 1364,
+        "Y": 1348
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 22,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60412,
+          "path": "ui/icon/060000/060412.tex",
+          "path_hr1": "ui/icon/060000/060412_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1007,
+        "Y": 1020
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 23,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60434,
+          "path": "ui/icon/060000/060434.tex",
+          "path_hr1": "ui/icon/060000/060434_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1074,
+        "Y": 1207
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 24,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60412,
+          "path": "ui/icon/060000/060412.tex",
+          "path_hr1": "ui/icon/060000/060412_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 991,
+        "Y": 1110
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 25,
+      "fields": {
+        "DataType": 4,
+        "Icon": {
+          "id": 60430,
+          "path": "ui/icon/060000/060430.tex",
+          "path_hr1": "ui/icon/060000/060430_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1356,
+        "Y": 1199
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 26,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60412,
+          "path": "ui/icon/060000/060412.tex",
+          "path_hr1": "ui/icon/060000/060412_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1050,
+        "Y": 1028
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 27,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60460,
+          "path": "ui/icon/060000/060460.tex",
+          "path_hr1": "ui/icon/060000/060460_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 866,
+        "Y": 1019
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 28,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 473,
+          "sheet": "PlaceName",
+          "row_id": 473,
+          "fields": {
+            "Name": "White Wolf Gate Guard"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 795,
+        "Y": 1211
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 29,
+      "fields": {
+        "DataType": 1,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 54,
+          "sheet": "PlaceName",
+          "row_id": 54,
+          "fields": {
+            "Name": "Central Shroud"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 735,
+        "Y": 1231
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 30,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60412,
+          "path": "ui/icon/060000/060412.tex",
+          "path_hr1": "ui/icon/060000/060412_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 888,
+        "Y": 1002
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 31,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60935,
+          "path": "ui/icon/060000/060935.tex",
+          "path_hr1": "ui/icon/060000/060935_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 875,
+        "Y": 1031
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 32,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60571,
+          "path": "ui/icon/060000/060571.tex",
+          "path_hr1": "ui/icon/060000/060571_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 868,
+        "Y": 1028
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 33,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60581,
+          "path": "ui/icon/060000/060581.tex",
+          "path_hr1": "ui/icon/060000/060581_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 997,
+        "Y": 1040
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 34,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60467,
+          "path": "ui/icon/060000/060467.tex",
+          "path_hr1": "ui/icon/060000/060467_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 3,
+        "Type": 0,
+        "X": 795,
+        "Y": 1200
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 35,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 1800,
+          "sheet": "PlaceName",
+          "row_id": 1800,
+          "fields": {
+            "Name": "Twin Adder Barracks"
+          }
+        },
+        "SubtextOrientation": 1,
+        "Type": 0,
+        "X": 860,
+        "Y": 1009
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 36,
+      "fields": {
+        "DataType": 2,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 8,
+        "Type": 0,
+        "X": 1078,
+        "Y": 1222
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 37,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 0,
+        "Type": 0,
+        "X": 0,
+        "Y": 0
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 38,
+      "fields": {
+        "DataType": 2,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 8,
+        "Type": 0,
+        "X": 860,
+        "Y": 1009
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 39,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 0,
+          "path": "ui/icon/000000/000000.tex",
+          "path_hr1": "ui/icon/000000/000000_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 0,
+        "Type": 0,
+        "X": 0,
+        "Y": 0
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 40,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 63922,
+          "path": "ui/icon/063000/063922.tex",
+          "path_hr1": "ui/icon/063000/063922_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1140,
+        "Y": 1118
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 41,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 63919,
+          "path": "ui/icon/063000/063919.tex",
+          "path_hr1": "ui/icon/063000/063919_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1098,
+        "Y": 1135
+      }
+    },
+    {
+      "row_id": 3,
+      "subrow_id": 42,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60412,
+          "path": "ui/icon/060000/060412.tex",
+          "path_hr1": "ui/icon/060000/060412_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 0,
+          "sheet": "PlaceName",
+          "row_id": 0,
+          "fields": {
+            "Name": ""
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1107,
+        "Y": 1210
+      }
+    },
+    {
+      "row_id": 4,
+      "subrow_id": 0,
+      "fields": {
+        "DataType": 0,
+        "Icon": {
+          "id": 60442,
+          "path": "ui/icon/060000/060442.tex",
+          "path_hr1": "ui/icon/060000/060442_hr1.tex"
+        },
+        "PlaceNameSubtext": {
+          "value": 564,
+          "sheet": "PlaceName",
+          "row_id": 564,
+          "fields": {
+            "Name": "Ebony Stalls"
+          }
+        },
+        "SubtextOrientation": 2,
+        "Type": 0,
+        "X": 1350,
+        "Y": 773
+      }
+    }
+  ]
+}

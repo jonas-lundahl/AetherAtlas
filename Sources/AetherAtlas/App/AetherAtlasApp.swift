@@ -11,20 +11,23 @@ import SwiftUI
     .commands {
       AppUpdateCommands()
       CommandGroup(after: .textEditing) {
-        Button("Find in Game Database") { workspace.searchFocus += 1 }.keyboardShortcut("f")
+        Button("Find") { workspace.searchFocus += 1 }.keyboardShortcut("f")
       }
       CommandMenu("Navigate") {
-        Button("Back", systemImage: "chevron.left") { workspace.navigation.back() }
-          .keyboardShortcut("[", modifiers: .command).disabled(!workspace.navigation.canBack)
-        Button("Forward", systemImage: "chevron.right") { workspace.navigation.forward() }
-          .keyboardShortcut("]", modifiers: .command).disabled(!workspace.navigation.canForward)
+        Button("Back", systemImage: "chevron.left") { workspace.goBack() }
+          .keyboardShortcut("[", modifiers: .command).disabled(
+            !workspace.canGoBack)
+        Button("Forward", systemImage: "chevron.right") { workspace.goForward() }
+          .keyboardShortcut("]", modifiers: .command).disabled(
+            !workspace.canGoForward)
         Divider()
         Button("Toggle Favorite", systemImage: "star") {
-          if let entity = workspace.detail.detail?.entity ?? workspace.navigation.current {
-            Task { await workspace.library.toggle(entity) }
-          }
-        }.keyboardShortcut("d", modifiers: .command).disabled(workspace.navigation.current == nil)
-        Button("Refresh Results") { workspace.search.retry() }.keyboardShortcut(
+          workspace.toggleCurrentFavorite()
+        }.keyboardShortcut("d", modifiers: .command).disabled(
+          !workspace.canToggleFavorite)
+        Button("Refresh Results") {
+          workspace.refreshResults()
+        }.keyboardShortcut(
           "r", modifiers: .command)
       }
     }

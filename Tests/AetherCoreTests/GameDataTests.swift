@@ -19,8 +19,10 @@ func testGameDataIndex(
   var rows: [String: GameDataIndex.Sheet] = [:]
   for kind in EntityKind.allCases {
     rows[kind.rawValue] = GameDataIndex.Sheet(
-      ids: ids, levels: kind == .npc ? nil : levels ?? ids.map { max(0, $0) }, names: localized)
+      ids: ids, levels: (kind == .npc || kind == .map) ? nil : levels ?? ids.map { max(0, $0) },
+      names: localized, searchTerms: kind == .map ? localized : nil)
   }
+  rows["Map"] = GameDataIndex.Sheet(ids: ids, levels: nil, names: localized, searchTerms: localized)
   return try GameDataIndex(
     snapshot: GameDataSnapshot(
       version: "0123456789abcdef", patch: "7.57",
@@ -163,7 +165,9 @@ actor IndexBrowseTransport: HTTPTransport {
     GameDataIndex.Sheet(ids: [1], levels: [1], names: ["en": ["Name"]]),
     GameDataIndex.Sheet(ids: [1], levels: [1], names: goodNames.mapValues { _ in [""] }),
   ] {
-    let rows = Dictionary(uniqueKeysWithValues: EntityKind.allCases.map { ($0.rawValue, sheet) })
+    var rows = Dictionary(uniqueKeysWithValues: EntityKind.allCases.map { ($0.rawValue, sheet) })
+    rows["Map"] = GameDataIndex.Sheet(
+      ids: [1], levels: nil, names: goodNames, searchTerms: goodNames)
     #expect(throws: GameDataIndexError.self) { try GameDataIndex(snapshot: snapshot, rows: rows) }
   }
 }

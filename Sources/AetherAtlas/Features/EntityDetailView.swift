@@ -11,7 +11,11 @@ struct EntityDetailView: View {
         VStack(spacing: 0) {
           objectLanguagePicker.padding(.horizontal, 28).padding(.vertical, 12)
           Divider()
-          if let detail = model.detail, detail.entity.id == current.id {
+          if current.id.kind == .map {
+            MapDetailView(
+              model: workspace.mapDetail, entity: current, language: language,
+              refresh: { refresh += 1 }, icons: workspace.icons)
+          } else if let detail = model.detail, detail.entity.id == current.id {
             content(detail)
           } else if let error = model.error {
             ContentUnavailableView {
@@ -37,12 +41,11 @@ struct EntityDetailView: View {
       }
     }
     .navigationTitle(
-      model.detail?.entity.id == workspace.navigation.current?.id
-        ? model.detail?.entity.displayName ?? "Aether Atlas"
-        : workspace.navigation.current?.displayName ?? "Aether Atlas"
+      workspace.loadedEntity?.displayName ?? workspace.navigation.current?.displayName
+        ?? "Aether Atlas"
     )
     .toolbar {
-      if let entity = model.detail?.entity, workspace.navigation.current?.id == entity.id {
+      if let entity = workspace.loadedEntity {
         ToolbarItemGroup(placement: .primaryAction) {
           Button(
             workspace.library.isFavorite(entity.id) ? "Remove Favorite" : "Add Favorite",
@@ -60,28 +63,20 @@ struct EntityDetailView: View {
     ) {
       let id = workspace.navigation.current?.id
       model.language = workspace.objectLanguage
-      await model.load(id, refresh: refresh > 0)
+      if id?.kind == .map {
+        await workspace.mapDetail.load(id?.row, language: language, refresh: refresh > 0)
+      } else {
+        await model.load(id, refresh: refresh > 0)
+      }
     }
-    .onChange(of: model.detail?.entity) { _, entity in
+    .onChange(of: workspace.loadedEntity) { _, entity in
       if let entity { Task { await workspace.recordLoadedEntity(entity) } }
     }
   }
   private var objectLanguagePicker: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      HStack {
-        Text("Object language")
-        Spacer()
-        Text(workspace.objectLanguage.title).accessibilityIdentifier("objectLanguageName")
-      }.font(.caption).foregroundStyle(.secondary)
-      GameLanguagePicker(
-        label: "Object language",
-        selection: Binding(
-          get: { workspace.objectLanguage },
-          set: { workspace.objectLanguageOverride = $0 }),
-        identifier: "objectLanguagePicker"
-      )
-      .fixedSize()
-    }
+    ObjectLanguageHeader(
+      selection: Binding(
+        get: { workspace.objectLanguage }, set: { workspace.objectLanguageOverride = $0 }))
   }
   private func content(_ detail: EntityDetail) -> some View {
     ScrollView {
@@ -123,6 +118,7 @@ struct EntityDetailView: View {
         case .action: actionSections(detail)
         case .quest: questSections(detail)
         case .npc: npcSections(detail)
+        case .map: EmptyView()
         }
         Divider()
         DisclosureGroup("Source information") {

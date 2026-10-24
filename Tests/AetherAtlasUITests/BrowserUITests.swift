@@ -1,6 +1,262 @@
 import XCTest
 
 @MainActor final class BrowserUITests: XCTestCase {
+  func testMapPilotZoomLayersSearchAndSelection() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let maps = app.descendants(matching: .any).matching(identifier: "category-Map").firstMatch
+    XCTAssertTrue(maps.waitForExistence(timeout: 10))
+    maps.click()
+    let initial = app.descendants(matching: .any)["entity-Map:3"]
+    XCTAssertTrue(initial.waitForExistence(timeout: 5))
+    initial.click()
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    app.descendants(matching: .any).matching(identifier: "entity-Map:2").firstMatch.click()
+    let landmark = app.buttons["mapMarker-3:0"]
+    XCTAssertTrue(landmark.waitForExistence(timeout: 5), app.debugDescription)
+    landmark.click()
+    assertDisplayedText("Fixture landmark", in: app.staticTexts["mapSelection"])
+    assertDisplayedText("1 marker", in: app.staticTexts["mapMarkerCount"])
+    app.buttons["Zoom In"].click()
+    app.buttons["Zoom In"].click()
+    assertDisplayedText("2 markers", in: app.staticTexts["mapMarkerCount"])
+    let zoomBeforeArtwork = app.staticTexts["mapZoom"].value as? String
+    let detailTabs = app.descendants(matching: .any).matching(identifier: "mapDetailTabs")
+      .firstMatch
+    detailTabs.radioButtons["Loading Screen"].click()
+    let artwork = app.images["mapLoadingArtwork"]
+    XCTAssertTrue(artwork.waitForExistence(timeout: 5))
+    XCTAssertGreaterThan(artwork.frame.width, 300)
+    XCTAssertGreaterThan(artwork.frame.height, 150)
+    XCTAssertEqual(artwork.frame.width / artwork.frame.height, 16.0 / 9.0, accuracy: 0.05)
+    detailTabs.radioButtons["Map"].click()
+    XCTAssertTrue(landmark.waitForExistence(timeout: 5))
+    XCTAssertEqual(app.staticTexts["mapZoom"].value as? String, zoomBeforeArtwork)
+    app.buttons["Fit Map"].click()
+    assertDisplayedText("1.0", in: app.staticTexts["mapZoom"])
+    assertDisplayedText("1 marker", in: app.staticTexts["mapMarkerCount"])
+    let layers = app.descendants(matching: .any).matching(identifier: "mapLayers").firstMatch
+    layers.click()
+    app.menuItems["Named places"].click()
+    assertDisplayedText("0 markers", in: app.staticTexts["mapMarkerCount"])
+    app.typeKey("f", modifierFlags: .command)
+    app.searchFields.firstMatch.typeText("Old Gridania")
+    let old = app.descendants(matching: .any).matching(identifier: "entity-Map:3").firstMatch
+    XCTAssertTrue(old.waitForExistence(timeout: 5))
+    old.click()
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    app.typeKey("f", modifierFlags: .command)
+    app.searchFields.firstMatch.typeKey("a", modifierFlags: .command)
+    app.searchFields.firstMatch.typeText("no-results")
+    XCTAssertTrue(app.staticTexts["No matching entities"].waitForExistence(timeout: 5))
+    app.typeKey(.escape, modifierFlags: [])
+    XCTAssertTrue(old.waitForExistence(timeout: 5))
+    let screenshot = XCTAttachment(screenshot: app.screenshot())
+    screenshot.name = "Map pilot"
+    screenshot.lifetime = .keepAlways
+    add(screenshot)
+  }
+
+  func testMapSortAndIndependentObjectLanguage() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let maps = app.descendants(matching: .any).matching(identifier: "category-Map").firstMatch
+    XCTAssertTrue(maps.waitForExistence(timeout: 10))
+    maps.click()
+    let initial = app.descendants(matching: .any)["entity-Map:3"]
+    XCTAssertTrue(initial.waitForExistence(timeout: 5))
+    initial.click()
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    let list = app.descendants(matching: .any).matching(identifier: "entityResults").firstMatch
+    let old = app.descendants(matching: .any).matching(identifier: "entity-Map:3").firstMatch
+    let new = app.descendants(matching: .any).matching(identifier: "entity-Map:2").firstMatch
+    XCTAssertLessThan(old.frame.minY, new.frame.minY)
+    app.menuButtons["resultSort"].click()
+    app.menuItems["Name"].click()
+    XCTAssertLessThan(new.frame.minY, old.frame.minY)
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    let picker = app.descendants(matching: .any).matching(identifier: "objectLanguagePicker")
+      .firstMatch
+    XCTAssertEqual(picker.radioButtons.count, 4)
+    picker.radioButtons["🇩🇪"].click()
+    assertDisplayedText("Alt-Gridania", in: app.staticTexts["mapDetailName"])
+    XCTAssertTrue(list.exists)
+    XCTAssertTrue(old.exists)
+    new.click()
+    assertDisplayedText("New Gridania", in: app.staticTexts["mapDetailName"])
+    old.click()
+    assertDisplayedText("Alt-Gridania", in: app.staticTexts["mapDetailName"])
+    let global = app.descendants(matching: .any).matching(identifier: "gameLanguagePicker")
+      .firstMatch
+    XCTAssertEqual(global.radioButtons["🇬🇧"].value as? Int, 1)
+    picker.radioButtons["🇬🇧"].click()
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    app.menuButtons["resultSort"].click()
+    app.menuItems["ID (highest first)"].click()
+    XCTAssertLessThan(old.frame.minY, new.frame.minY)
+  }
+
+  func testMapsUseFiftyRowInfiniteScrollAndTheEstablishedListHeader() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_MAP_PAGINATION"] = "1"
+    app.launchEnvironment["AETHER_UI_PAGINATION_FAILURE"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let maps = app.descendants(matching: .any).matching(identifier: "category-Map").firstMatch
+    XCTAssertTrue(maps.waitForExistence(timeout: 10))
+    maps.click()
+    let list = app.tables["entityResults"]
+    let newest = app.descendants(matching: .any)["entity-Map:122"]
+    XCTAssertTrue(newest.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["Browse the game database"].exists)
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    XCTAssertFalse(app.buttons["Refresh Maps"].exists)
+    XCTAssertFalse(app.buttons["Load More"].exists)
+    newest.click()
+    app.typeKey("s", modifierFlags: [])
+    assertDisplayedText("Fixture Map 121", in: app.staticTexts["mapDetailName"])
+    app.typeKey("w", modifierFlags: [])
+    assertDisplayedText("Fixture Map 122", in: app.staticTexts["mapDetailName"])
+    list.scroll(byDeltaX: 0, deltaY: -10000)
+    let retry = app.buttons["Retry Loading More"]
+    XCTAssertTrue(retry.waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    let anchor = app.descendants(matching: .any)["entity-Map:73"]
+    XCTAssertTrue(anchor.exists)
+    let position = anchor.frame.midY
+    list.scroll(byDeltaX: 0, deltaY: -100)
+    XCTAssertTrue(retry.exists)
+    retry.click()
+    XCTAssertTrue(app.staticTexts["100 loaded"].waitForExistence(timeout: 5))
+    XCTAssertEqual(anchor.frame.midY, position, accuracy: 2)
+    assertDisplayedText("Fixture Map 122", in: app.staticTexts["mapDetailName"])
+    XCTAssertEqual(list.tableRows.matching(NSPredicate(format: "selected == true")).count, 1)
+    list.scroll(byDeltaX: 0, deltaY: -10000)
+    XCTAssertTrue(app.staticTexts["121 loaded"].waitForExistence(timeout: 5))
+    app.menuButtons["resultSort"].click()
+    app.menuItems["Name"].click()
+    XCTAssertTrue(app.descendants(matching: .any)["entity-Map:2"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.staticTexts["50 loaded"].exists)
+    assertDisplayedText("Fixture Map 122", in: app.staticTexts["mapDetailName"])
+    app.typeKey("f", modifierFlags: .command)
+    app.searchFields.firstMatch.typeText("Fixture Map 00")
+    XCTAssertTrue(app.staticTexts["8 loaded"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.descendants(matching: .any)["entity-Map:2"].exists)
+    XCTAssertTrue(app.descendants(matching: .any)["entity-Map:9"].exists)
+    assertDisplayedText("Fixture Map 122", in: app.staticTexts["mapDetailName"])
+  }
+
+  func testMapsShareTitleBarActionsFavoritesHistoryAndBackNavigation() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let maps = app.descendants(matching: .any)["category-Map"]
+    XCTAssertTrue(maps.waitForExistence(timeout: 10))
+    maps.click()
+    let new = app.descendants(matching: .any)["entity-Map:2"]
+    let old = app.descendants(matching: .any)["entity-Map:3"]
+    XCTAssertTrue(new.waitForExistence(timeout: 5))
+    new.click()
+    XCTAssertTrue(app.buttons["Add Favorite"].waitForExistence(timeout: 5))
+    app.buttons["Add Favorite"].click()
+    XCTAssertTrue(app.buttons["Remove Favorite"].waitForExistence(timeout: 5))
+    XCTAssertTrue(app.buttons["Refresh Details"].exists)
+    app.buttons["Refresh Details"].click()
+    XCTAssertTrue(app.buttons["mapMarker-3:0"].waitForExistence(timeout: 5))
+    let picker = app.descendants(matching: .any)["objectLanguagePicker"]
+    picker.radioButtons["🇩🇪"].click()
+    assertDisplayedText("Neu-Gridania", in: app.staticTexts["mapDetailName"])
+    old.click()
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    app.typeKey("[", modifierFlags: .command)
+    assertDisplayedText("Neu-Gridania", in: app.staticTexts["mapDetailName"])
+    let favorites = app.descendants(matching: .any).matching(identifier: "sidebar-favorites")
+      .firstMatch
+    favorites.click()
+    XCTAssertTrue(new.waitForExistence(timeout: 5))
+    new.click()
+    assertDisplayedText("Neu-Gridania", in: app.staticTexts["mapDetailName"])
+    app.terminate()
+    app.launch()
+    favorites.click()
+    XCTAssertTrue(new.waitForExistence(timeout: 5))
+    new.click()
+    assertDisplayedText("New Gridania", in: app.staticTexts["mapDetailName"])
+    XCTAssertTrue(app.buttons["Remove Favorite"].waitForExistence(timeout: 5))
+    app.descendants(matching: .any).matching(identifier: "sidebar-history").firstMatch.click()
+    XCTAssertTrue(old.waitForExistence(timeout: 5))
+    XCTAssertLessThan(new.frame.minY, old.frame.minY)
+    old.click()
+    assertDisplayedText("Old Gridania", in: app.staticTexts["mapDetailName"])
+    XCTAssertLessThan(new.frame.minY, old.frame.minY)
+    new.click()
+    assertDisplayedText("New Gridania", in: app.staticTexts["mapDetailName"])
+    app.typeKey("d", modifierFlags: .command)
+    XCTAssertTrue(app.buttons["Add Favorite"].waitForExistence(timeout: 5))
+  }
+
+  func testCursorMapCoordinatesFollowHoverZoomAndKeyboardPan() {
+    continueAfterFailure = false
+    let app = XCUIApplication()
+    app.launchEnvironment["AETHER_UI_TESTING"] = "1"
+    app.launchEnvironment["AETHER_UI_TEST_SESSION"] = UUID().uuidString
+    app.launch()
+    let maps = app.descendants(matching: .any).matching(identifier: "category-Map").firstMatch
+    XCTAssertTrue(maps.waitForExistence(timeout: 10))
+    maps.click()
+    let row = app.descendants(matching: .any)["entity-Map:2"]
+    XCTAssertTrue(row.waitForExistence(timeout: 5))
+    row.click()
+    let canvas = app.scrollViews["mapCanvas"]
+    let landmark = app.buttons["mapMarker-3:0"]
+    XCTAssertTrue(landmark.waitForExistence(timeout: 5))
+    let coordinates = app.staticTexts["mapCoordinates"]
+    assertDisplayedText("X: —  Y: —", in: coordinates)
+    // Hover a real marker to cover child views as well as bare parchment.
+    landmark.hover()
+    assertDisplayedText("X: 11.2  Y: 11.2", in: coordinates)
+    XCTAssertFalse((coordinates.value as? String ?? coordinates.label).contains("Z"))
+    app.buttons["Zoom In"].click()
+    app.buttons["Zoom In"].click()
+    landmark.hover()
+    assertDisplayedText("X: 11.2  Y: 11.2", in: coordinates)
+    canvas.coordinate(withNormalizedOffset: CGVector(dx: 0.6, dy: 0.6)).hover()
+    landmark.click()
+    canvas.hover()
+    let before = coordinates.value as? String ?? coordinates.label
+    XCTAssertNotNil(
+      before.range(of: #"^X: [0-9]+\.[0-9]  Y: [0-9]+\.[0-9]$"#, options: .regularExpression))
+    app.typeKey(.rightArrow, modifierFlags: [])
+    let changed = NSPredicate(format: "value != %@ AND value != %@", before, "X: —  Y: —")
+    XCTAssertEqual(
+      XCTWaiter.wait(
+        for: [XCTNSPredicateExpectation(predicate: changed, object: coordinates)], timeout: 5),
+      .completed, "before=\(before), after=\(coordinates.value as Any) / \(coordinates.label)")
+    app.buttons["Fit Map"].hover()
+    assertDisplayedText("X: —  Y: —", in: coordinates)
+    let tabs = app.descendants(matching: .any)["mapDetailTabs"]
+    tabs.radioButtons["Loading Screen"].click()
+    tabs.radioButtons["Map"].click()
+    assertDisplayedText("X: —  Y: —", in: coordinates)
+    app.buttons["Fit Map"].click()
+    let picker = app.descendants(matching: .any).matching(identifier: "objectLanguagePicker")
+      .firstMatch
+    picker.radioButtons["🇩🇪"].click()
+    assertDisplayedText("Neu-Gridania", in: app.staticTexts["mapDetailName"])
+    landmark.hover()
+    assertDisplayedText("X: 11.2  Y: 11.2", in: coordinates)
+  }
+
   private func assertDisplayedText(
     _ text: String, in element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) {

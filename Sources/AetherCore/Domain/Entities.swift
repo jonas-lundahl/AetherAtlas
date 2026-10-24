@@ -85,6 +85,7 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
   case quest = "Quest"
   case npc = "ENpcResident"
   case action = "Action"
+  case map = "Map"
   public var id: String { rawValue }
   public var title: String {
     switch self {
@@ -93,6 +94,7 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case .quest: "Quests"
     case .npc: "NPCs"
     case .action: "Actions"
+    case .map: "Maps"
     }
   }
   public var singular: String {
@@ -102,6 +104,7 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case .quest: "Quest"
     case .npc: "NPC"
     case .action: "Action"
+    case .map: "Map"
     }
   }
   public var symbol: String {
@@ -111,10 +114,12 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case .quest: "text.book.closed"
     case .npc: "person.2"
     case .action: "sparkles"
+    case .map: "map"
     }
   }
   public var nameField: String {
-    self == .recipe ? "ItemResult.Name" : self == .npc ? "Singular" : "Name"
+    self == .recipe
+      ? "ItemResult.Name" : self == .npc ? "Singular" : self == .map ? "PlaceName.Name" : "Name"
   }
   public var summaryFields: String {
     switch self {
@@ -125,8 +130,11 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
       "Name,ClassJobLevel,Expansion.Name,JournalGenre.Name,JournalGenre.Icon,ClassJobRequired.Name,EventIconType.NpcIconAvailable"
     case .npc: "Singular,Title"
     case .action: "Name,Icon,ClassJobLevel,ClassJob.Name,ActionCategory.Name"
+    case .map:
+      "Id,SizeFactor,PlaceName.Name,PlaceNameRegion.Name,PlaceNameSub.Name,MapMarkerRange,TerritoryType.LoadingImage.FileName,TerritoryType.Aetheryte.AethernetGroup"
     }
   }
+  public var sorts: [ResultSort] { self == .map ? [.original, .name] : ResultSort.allCases }
   public var detailFields: String {
     switch self {
     case .item:
@@ -138,7 +146,7 @@ public enum EntityKind: String, Codable, CaseIterable, Sendable, Identifiable {
     case .quest:
       summaryFields
         + ",Icon,Id,IssuerStart.Singular,PlaceName.Name,ExpFactor,GilReward,Reward[].Name,Reward[].Icon,ItemCountReward,OptionalItemReward[].Name,OptionalItemReward[].Icon,OptionalItemCountReward,OptionalItemIsHQReward,OtherReward.Name,QuestRewardOtherDisplay.Name"
-    case .npc: summaryFields
+    case .npc, .map: summaryFields
     case .action: summaryFields + ",Cast100ms,Recast100ms,Range"
     }
   }
@@ -228,6 +236,8 @@ public struct SheetRow: Codable, Sendable {
   }
   public subscript(_ key: String) -> FieldValue { fields[key] ?? .null }
   public func summary(kind: EntityKind) -> EntitySummary {
+    if kind == .map, let map = GameMap(row: self) { return map.summary }
+
     let result = self["ItemResult"]["fields"]
     let name =
       (kind == .recipe
@@ -240,6 +250,7 @@ public struct SheetRow: Codable, Sendable {
       case .recipe: self["CraftType"].referenceName
       case .quest: self["JournalGenre"].referenceName
       case .npc: self["Title"].string
+      case .map: self["PlaceNameRegion"].referenceName
       case .action: self["ActionCategory"].referenceName
       }
     let level =
@@ -247,7 +258,7 @@ public struct SheetRow: Codable, Sendable {
       case .item: self["LevelItem@as(raw)"].integer ?? self["LevelItem"]["value"].integer
       case .recipe: self["RecipeLevelTable"]["fields"]["ClassJobLevel"].integer
       case .quest: self["ClassJobLevel"].array.first?.integer
-      case .npc: nil as Int?
+      case .npc, .map: nil as Int?
       case .action: self["ClassJobLevel"].integer
       }
     return EntitySummary(
