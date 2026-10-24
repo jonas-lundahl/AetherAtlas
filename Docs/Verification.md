@@ -215,3 +215,14 @@ Empty result, empty saved-list, loading, and initial error bodies fill the avail
 - **Formatting/project:** changed Swift files pass strict swift-format lint, `git diff --check` passes, and regenerated project/scheme files are idempotent. The project registers the native control and its tests. README describes the controls, history-preview policy, empty-state sizing, and state ownership.
 
 Verified on macOS **26.6.2 / Apple Silicon**, Xcode **27.1 (27A9275)**, and Swift **6.4**. No Release archive or published release was produced. Exact macOS 26.0, Intel runtime behavior, light-appearance inspection, and a full spoken VoiceOver audit remain unverified.
+
+## XIVAPI dataset refresh — 24 October 2026
+
+Regenerated the bundled multilingual index from XIVAPI's latest **7.57x1** dataset, changing the canonical version from `5c744a8d8daafb25` to `0874aee069e1e7c4`. The schema remains `exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb`; existing field projections need no mapping changes. All five sheets were fetched with fixed dataset/schema pins before atomic replacement. The ID/name/level arrays are identical to the preceding snapshot: **146,884** named rows (50,880 Items, 13,892 Recipes, 5,373 Quests, 31,142 NPCs, and 45,597 Actions). The new manifest is **15,275,191 bytes**. Its new dataset pin also selects the newer snapshot for details, related data, and artwork, and separates their response-cache URLs from the old dataset.
+
+- **Freshness/index:** offline validation passed during regeneration, followed by a successful live `python3 Scripts/update_game_data.py --check-latest` comparison against XIVAPI's current dataset/schema metadata. All **6 offline generator tests passed**.
+- **SwiftPM:** all **70 tests passed** with complete strict concurrency checking against the refreshed resource, including index validation, localized sorting/pagination, and game-request pinning.
+- **Xcode/build:** all **80 core/native tests passed**, and the Debug app rebuilt successfully. Result: `build/Logs/Test/Test-AetherAtlas-2026.10.24_07-52-03-+0200.xcresult`. The packaged `Contents/Resources/GameDataIndex.json` matches the refreshed source byte for byte and contains patch 7.57x1 and version `0874aee069e1e7c4`.
+- **Documentation/diff:** README's current patch and resource size are updated; `git diff --check` passed. No application code, field mappings, or project structure changed. UI tests were not rerun for this resource-only update.
+
+The existing running app session had already loaded the preceding snapshot; a new launch is required to load the rebuilt bundle's new pins. Packaged-resource verification is not a runtime test of that new snapshot. No Release archive or published release was produced.
